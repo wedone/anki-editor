@@ -47,15 +47,15 @@
 
 ### 📊 数据展示组件 (23个)
 - [x] `element-plus-data-table.md` - Table 表格
-- [ ] `element-plus-data-virtualized-table.md` - Virtualized Table 虚拟化表格
+- [x] `element-plus-data-virtualized-table.md` - Virtualized Table 虚拟化表格
 - [x] `element-plus-data-card.md` - Card 卡片
 - [x] `element-plus-data-avatar.md` - Avatar 头像
 - [x] `element-plus-data-badge.md` - Badge 徽章
 - [x] `element-plus-data-tag.md` - Tag 标签
 - [x] `element-plus-data-progress.md` - Progress 进度条
 - [x] `element-plus-data-pagination.md` - Pagination 分页
-- [ ] `element-plus-data-tree.md` - Tree 树形控件
-- [ ] `element-plus-data-virtualized-tree.md` - Virtualized Tree 虚拟化树形控件
+- [x] `element-plus-data-tree.md` - Tree 树形控件
+- [x] `element-plus-data-virtualized-tree.md` - Virtualized Tree 虚拟化树形控件
 - [ ] `element-plus-data-timeline.md` - Timeline 时间线
 - [ ] `element-plus-data-calendar.md` - Calendar 日历
 - [ ] `element-plus-data-carousel.md` - Carousel 走马灯
@@ -100,9 +100,9 @@
 ## 📊 统计信息
 
 - **总组件数**: 79个
-- **已创建**: 34个
-- **待创建**: 45个
-- **完成进度**: 43.0%
+- **已创建**: 37个
+- **待创建**: 42个
+- **完成进度**: 46.8%
 
 ## 🚀 创建说明
 
