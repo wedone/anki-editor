@@ -10,16 +10,16 @@
 - [x] `element-plus-basic-color.md` - Color 色彩
 - [x] `element-plus-basic-container.md` - Container 布局容器
 - [x] `element-plus-basic-icon.md` - Icon 图标
-- [ ] `element-plus-basic-layout.md` - Layout 布局
-- [ ] `element-plus-basic-link.md` - Link 链接
-- [ ] `element-plus-basic-text.md` - Text 文本
-- [ ] `element-plus-basic-scrollbar.md` - Scrollbar 滚动条
-- [ ] `element-plus-basic-space.md` - Space 间距
-- [ ] `element-plus-basic-splitter.md` - Splitter 分隔面板
-- [ ] `element-plus-basic-typography.md` - Typography 排版
+- [x] `element-plus-basic-layout.md` - Layout 布局
+- [x] `element-plus-basic-link.md` - Link 链接
+- [x] `element-plus-basic-text.md` - Text 文本
+- [x] `element-plus-basic-scrollbar.md` - Scrollbar 滚动条
+- [x] `element-plus-basic-space.md` - Space 间距
+- [x] `element-plus-basic-splitter.md` - Splitter 分隔面板
+- [x] `element-plus-basic-typography.md` - Typography 排版
 
 ### ⚙️ 配置组件 (1个)
-- [ ] `element-plus-config-provider.md` - Config Provider 全局配置
+- [x] `element-plus-config-provider.md` - Config Provider 全局配置
 
 ### 📝 表单组件 (22个)
 - [x] `element-plus-form-input.md` - Input 输入框
