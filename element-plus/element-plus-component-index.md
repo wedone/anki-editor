@@ -30,20 +30,20 @@
 - [x] `element-plus-form-slider.md` - Slider 滑块
 - [x] `element-plus-form-date-picker.md` - Date Picker 日期选择器
 - [x] `element-plus-form-datetime-picker.md` - DateTime Picker 日期时间选择器
-- [ ] `element-plus-form-time-picker.md` - Time Picker 时间选择器
-- [ ] `element-plus-form-time-select.md` - Time Select 时间选择
-- [ ] `element-plus-form-upload.md` - Upload 上传
+- [x] `element-plus-form-time-picker.md` - Time Picker 时间选择器
+- [x] `element-plus-form-time-select.md` - Time Select 时间选择
+- [x] `element-plus-form-upload.md` - Upload 上传
 - [x] `element-plus-form-form.md` - Form 表单
-- [ ] `element-plus-form-autocomplete.md` - Autocomplete 自动补全
-- [ ] `element-plus-form-cascader.md` - Cascader 级联选择器
-- [ ] `element-plus-form-color-picker.md` - Color Picker 取色器
-- [ ] `element-plus-form-input-number.md` - Input Number 数字输入框
-- [ ] `element-plus-form-input-tag.md` - Input Tag 标签输入框
-- [ ] `element-plus-form-mention.md` - Mention 提及
-- [ ] `element-plus-form-rate.md` - Rate 评分
-- [ ] `element-plus-form-transfer.md` - Transfer 穿梭框
-- [ ] `element-plus-form-treeselect.md` - TreeSelect 树形选择
-- [ ] `element-plus-form-virtualized-select.md` - Virtualized Select 虚拟化选择器
+- [x] `element-plus-form-autocomplete.md` - Autocomplete 自动补全
+- [x] `element-plus-form-cascader.md` - Cascader 级联选择器
+- [x] `element-plus-form-color-picker.md` - Color Picker 取色器
+- [x] `element-plus-form-input-number.md` - Input Number 数字输入框
+- [x] `element-plus-form-input-tag.md` - Input Tag 标签输入框
+- [x] `element-plus-form-mention.md` - Mention 提及
+- [x] `element-plus-form-rate.md` - Rate 评分
+- [x] `element-plus-form-transfer.md` - Transfer 穿梭框
+- [x] `element-plus-form-treeselect.md` - TreeSelect 树形选择
+- [x] `element-plus-form-virtualized-select.md` - Virtualized Select 虚拟化选择器
 
 ### 📊 数据展示组件 (23个)
 - [x] `element-plus-data-table.md` - Table 表格
