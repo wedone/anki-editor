@@ -56,19 +56,19 @@
 - [x] `element-plus-data-pagination.md` - Pagination 分页
 - [x] `element-plus-data-tree.md` - Tree 树形控件
 - [x] `element-plus-data-virtualized-tree.md` - Virtualized Tree 虚拟化树形控件
-- [ ] `element-plus-data-timeline.md` - Timeline 时间线
-- [ ] `element-plus-data-calendar.md` - Calendar 日历
-- [ ] `element-plus-data-carousel.md` - Carousel 走马灯
-- [ ] `element-plus-data-collapse.md` - Collapse 折叠面板
-- [ ] `element-plus-data-descriptions.md` - Descriptions 描述列表
-- [ ] `element-plus-data-empty.md` - Empty 空状态
-- [ ] `element-plus-data-image.md` - Image 图片
-- [ ] `element-plus-data-skeleton.md` - Skeleton 骨架屏
-- [ ] `element-plus-data-result.md` - Result 结果
-- [ ] `element-plus-data-statistic.md` - Statistic 统计组件
-- [ ] `element-plus-data-segmented.md` - Segmented 分段控制器
-- [ ] `element-plus-data-infinite-scroll.md` - Infinite Scroll 无限滚动
-- [ ] `element-plus-data-tour.md` - Tour 漫游式引导
+- [x] `element-plus-data-timeline.md` - Timeline 时间线
+- [x] `element-plus-data-calendar.md` - Calendar 日历
+- [x] `element-plus-data-carousel.md` - Carousel 走马灯
+- [x] `element-plus-data-collapse.md` - Collapse 折叠面板
+- [x] `element-plus-data-descriptions.md` - Descriptions 描述列表
+- [x] `element-plus-data-empty.md` - Empty 空状态
+- [x] `element-plus-data-image.md` - Image 图片
+- [x] `element-plus-data-skeleton.md` - Skeleton 骨架屏
+- [x] `element-plus-data-result.md` - Result 结果
+- [x] `element-plus-data-statistic.md` - Statistic 统计组件
+- [x] `element-plus-data-segmented.md` - Segmented 分段控制器
+- [x] `element-plus-data-infinite-scroll.md` - Infinite Scroll 无限滚动
+- [x] `element-plus-data-tour.md` - Tour 漫游式引导
 
 ### 🧭 导航组件 (9个)
 - [x] `element-plus-navigation-menu.md` - Menu 菜单
@@ -100,9 +100,9 @@
 ## 📊 统计信息
 
 - **总组件数**: 79个
-- **已创建**: 37个
-- **待创建**: 42个
-- **完成进度**: 46.8%
+- **已创建**: 50个
+- **待创建**: 29个
+- **完成进度**: 63.3%
 
 ## 🚀 创建说明
 
