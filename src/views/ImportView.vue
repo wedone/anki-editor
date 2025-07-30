@@ -2,251 +2,481 @@
   <div class="import-view">
     <div class="page-header">
       <h2>导入导出</h2>
+      <div class="header-actions">
+        <el-button type="primary" @click="exportData">
+          <el-icon><Download /></el-icon>
+          导出数据
+        </el-button>
+      </div>
     </div>
 
     <div class="import-content">
-      <el-row :gutter="20">
-        <!-- 导入部分 -->
-        <el-col :span="12">
-          <el-card>
-            <template #header>
-              <div class="card-header">
-                <span>导入数据</span>
-              </div>
-            </template>
-            
-            <div class="import-section">
-              <h4>从文件导入</h4>
-              <el-upload
-                class="upload-demo"
-                drag
-                action="#"
-                :auto-upload="false"
-                :on-change="handleFileChange"
-                accept=".apkg,.csv,.txt"
-              >
-                <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-                <div class="el-upload__text">
-                  将文件拖到此处，或<em>点击上传</em>
-                </div>
-                <template #tip>
-                  <div class="el-upload__tip">
-                    支持 .apkg, .csv, .txt 格式文件
-                  </div>
+      <!-- 连接状态提示 -->
+      <el-alert
+        v-if="!ankiStore.isConnected"
+        title="未连接到 Anki"
+        description="请先在设置中配置 AnkiConnect 连接"
+        type="warning"
+        show-icon
+        style="margin-bottom: 20px;"
+      />
+
+      <!-- 导入导出区域 -->
+      <div v-if="ankiStore.isConnected" class="import-sections">
+        <!-- 导入区域 -->
+        <div class="import-section">
+          <h3>导入数据</h3>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-card>
+                <template #header>
+                  <span>导入 Anki 牌组文件</span>
                 </template>
-              </el-upload>
-              
-              <div class="import-options">
-                <h4>导入选项</h4>
-                <el-form label-width="100px">
-                  <el-form-item label="目标牌组">
-                    <el-select v-model="importOptions.deck" placeholder="选择目标牌组">
-                      <el-option label="默认牌组" value="默认牌组" />
-                      <el-option label="JavaScript 学习" value="JavaScript 学习" />
-                      <el-option label="Vue.js 基础" value="Vue.js 基础" />
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item label="标签">
-                    <el-input v-model="importOptions.tags" placeholder="添加标签，用逗号分隔" />
-                  </el-form-item>
-                  <el-form-item>
-                    <el-button type="primary" @click="startImport" :loading="importing">
+                <div class="import-area">
+                  <el-upload
+                    ref="uploadRef"
+                    :auto-upload="false"
+                    :on-change="handleFileChange"
+                    :file-list="fileList"
+                    accept=".apkg"
+                    drag
+                  >
+                    <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+                    <div class="el-upload__text">
+                      将文件拖到此处，或<em>点击上传</em>
+                    </div>
+                    <template #tip>
+                      <div class="el-upload__tip">
+                        只能上传 .apkg 文件，且不超过 100MB
+                      </div>
+                    </template>
+                  </el-upload>
+                  <div class="upload-actions">
+                    <el-button type="primary" @click="handleImport" :loading="importing" :disabled="!selectedFile">
                       开始导入
                     </el-button>
-                  </el-form-item>
-                </el-form>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
+                    <el-button @click="clearFiles">清空文件</el-button>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="12">
+              <el-card>
+                <template #header>
+                  <span>导入 CSV 文件</span>
+                </template>
+                <div class="import-area">
+                  <el-upload
+                    ref="csvUploadRef"
+                    :auto-upload="false"
+                    :on-change="handleCsvFileChange"
+                    :file-list="csvFileList"
+                    accept=".csv"
+                    drag
+                  >
+                    <el-icon class="el-icon--upload"><Document /></el-icon>
+                    <div class="el-upload__text">
+                      将 CSV 文件拖到此处，或<em>点击上传</em>
+                    </div>
+                    <template #tip>
+                      <div class="el-upload__tip">
+                        只能上传 .csv 文件，格式：字段1,字段2,字段3
+                      </div>
+                    </template>
+                  </el-upload>
+                  <div class="upload-actions">
+                    <el-button type="primary" @click="handleCsvImport" :loading="csvImporting" :disabled="!selectedCsvFile">
+                      开始导入
+                    </el-button>
+                    <el-button @click="clearCsvFiles">清空文件</el-button>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+          </el-row>
+        </div>
 
-        <!-- 导出部分 -->
-        <el-col :span="12">
-          <el-card>
-            <template #header>
-              <div class="card-header">
-                <span>导出数据</span>
-              </div>
-            </template>
-            
-            <div class="export-section">
-              <h4>导出选项</h4>
-              <el-form label-width="100px">
-                <el-form-item label="导出范围">
-                  <el-select v-model="exportOptions.scope" placeholder="选择导出范围">
-                    <el-option label="全部牌组" value="all" />
-                    <el-option label="指定牌组" value="specific" />
-                    <el-option label="指定标签" value="tags" />
+        <!-- 导出区域 -->
+        <div class="export-section">
+          <h3>导出数据</h3>
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <el-card>
+                <template #header>
+                  <span>导出牌组</span>
+                </template>
+                <div class="export-area">
+                  <el-select v-model="selectedDeck" placeholder="选择要导出的牌组" style="width: 100%; margin-bottom: 15px;">
+                    <el-option label="全部牌组" value="" />
+                    <el-option 
+                      v-for="deck in ankiStore.decks" 
+                      :key="deck.name" 
+                      :label="deck.name" 
+                      :value="deck.name" 
+                    />
                   </el-select>
-                </el-form-item>
-                
-                <el-form-item label="牌组选择" v-if="exportOptions.scope === 'specific'">
-                  <el-select v-model="exportOptions.decks" multiple placeholder="选择要导出的牌组">
-                    <el-option label="默认牌组" value="默认牌组" />
-                    <el-option label="JavaScript 学习" value="JavaScript 学习" />
-                    <el-option label="Vue.js 基础" value="Vue.js 基础" />
-                  </el-select>
-                </el-form-item>
-                
-                <el-form-item label="标签选择" v-if="exportOptions.scope === 'tags'">
-                  <el-select v-model="exportOptions.tags" multiple placeholder="选择要导出的标签">
-                    <el-option label="学习" value="学习" />
-                    <el-option label="工作" value="工作" />
-                    <el-option label="javascript" value="javascript" />
-                    <el-option label="vue" value="vue" />
-                  </el-select>
-                </el-form-item>
-                
-                <el-form-item label="导出格式">
-                  <el-radio-group v-model="exportOptions.format">
-                    <el-radio label="apkg">Anki 包 (.apkg)</el-radio>
-                    <el-radio label="csv">CSV 文件 (.csv)</el-radio>
-                    <el-radio label="txt">文本文件 (.txt)</el-radio>
-                  </el-radio-group>
-                </el-form-item>
-                
-                <el-form-item>
-                  <el-button type="primary" @click="startExport" :loading="exporting">
-                    开始导出
+                  <el-button type="primary" @click="exportDeck" :loading="exporting" style="width: 100%;">
+                    <el-icon><Download /></el-icon>
+                    导出牌组
                   </el-button>
-                </el-form-item>
-              </el-form>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="8">
+              <el-card>
+                <template #header>
+                  <span>导出卡片</span>
+                </template>
+                <div class="export-area">
+                  <el-select v-model="selectedCards" placeholder="选择要导出的卡片" style="width: 100%; margin-bottom: 15px;">
+                    <el-option label="全部卡片" value="" />
+                    <el-option label="按牌组筛选" value="by-deck" />
+                    <el-option label="按标签筛选" value="by-tag" />
+                  </el-select>
+                  <el-button type="primary" @click="exportCards" :loading="exporting" style="width: 100%;">
+                    <el-icon><Download /></el-icon>
+                    导出卡片
+                  </el-button>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="8">
+              <el-card>
+                <template #header>
+                  <span>导出模板</span>
+                </template>
+                <div class="export-area">
+                  <el-select v-model="selectedModel" placeholder="选择要导出的模板" style="width: 100%; margin-bottom: 15px;">
+                    <el-option label="全部模板" value="" />
+                    <el-option 
+                      v-for="model in ankiStore.models" 
+                      :key="model.name" 
+                      :label="model.name" 
+                      :value="model.name" 
+                    />
+                  </el-select>
+                  <el-button type="primary" @click="exportModel" :loading="exporting" style="width: 100%;">
+                    <el-icon><Download /></el-icon>
+                    导出模板
+                  </el-button>
+                </div>
+              </el-card>
+            </el-col>
+          </el-row>
+        </div>
 
-      <!-- 历史记录 -->
-      <el-card style="margin-top: 20px;">
-        <template #header>
-          <div class="card-header">
-            <span>导入导出历史</span>
-          </div>
-        </template>
-        
-        <el-table :data="history" style="width: 100%">
-          <el-table-column prop="type" label="类型" width="100">
-            <template #default="scope">
-              <el-tag :type="scope.row.type === 'import' ? 'success' : 'primary'">
-                {{ scope.row.type === 'import' ? '导入' : '导出' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="filename" label="文件名" />
-          <el-table-column prop="status" label="状态" width="100">
-            <template #default="scope">
-              <el-tag :type="scope.row.status === 'success' ? 'success' : 'danger'">
-                {{ scope.row.status === 'success' ? '成功' : '失败' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="time" label="时间" width="180" />
-          <el-table-column prop="details" label="详情" />
-        </el-table>
-      </el-card>
+        <!-- 导入历史 -->
+        <div class="history-section">
+          <h3>导入历史</h3>
+          <el-card>
+            <el-table :data="importHistory" style="width: 100%">
+              <el-table-column prop="fileName" label="文件名" />
+              <el-table-column prop="type" label="类型" width="100">
+                <template #default="{ row }">
+                  <el-tag :type="row.type === 'apkg' ? 'primary' : 'success'">
+                    {{ row.type === 'apkg' ? '牌组文件' : 'CSV文件' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="状态" width="100">
+                <template #default="{ row }">
+                  <el-tag :type="row.status === 'success' ? 'success' : row.status === 'error' ? 'danger' : 'warning'">
+                    {{ row.status === 'success' ? '成功' : row.status === 'error' ? '失败' : '进行中' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="importTime" label="导入时间" width="180" />
+              <el-table-column prop="description" label="描述" />
+            </el-table>
+          </el-card>
+        </div>
+
+        <!-- 数据概览 -->
+        <div class="overview-section">
+          <h3>数据概览</h3>
+          <el-row :gutter="20">
+            <el-col :span="6">
+              <el-card class="overview-card">
+                <div class="overview-content">
+                  <div class="overview-icon">
+                    <el-icon><Folder /></el-icon>
+                  </div>
+                  <div class="overview-info">
+                    <div class="overview-number">{{ ankiStore.decks.length }}</div>
+                    <div class="overview-label">牌组数量</div>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="6">
+              <el-card class="overview-card">
+                <div class="overview-content">
+                  <div class="overview-icon">
+                    <el-icon><Document /></el-icon>
+                  </div>
+                  <div class="overview-info">
+                    <div class="overview-number">{{ ankiStore.notes.length }}</div>
+                    <div class="overview-label">卡片数量</div>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="6">
+              <el-card class="overview-card">
+                <div class="overview-content">
+                  <div class="overview-icon">
+                    <el-icon><Files /></el-icon>
+                  </div>
+                  <div class="overview-info">
+                    <div class="overview-number">{{ ankiStore.models.length }}</div>
+                    <div class="overview-label">模板数量</div>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="6">
+              <el-card class="overview-card">
+                <div class="overview-content">
+                  <div class="overview-icon">
+                    <el-icon><PriceTag /></el-icon>
+                  </div>
+                  <div class="overview-info">
+                    <div class="overview-number">{{ ankiStore.tags.length }}</div>
+                    <div class="overview-label">标签数量</div>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+          </el-row>
+        </div>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-else class="empty-state">
+        <el-empty description="暂无导入导出功能">
+          <el-button type="primary" @click="testConnection">
+            测试连接
+          </el-button>
+        </el-empty>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useAnkiStore } from '@/stores/ankiStore'
 
-// 导入选项
-const importOptions = reactive({
-  deck: '',
-  tags: ''
-})
-
-// 导出选项
-const exportOptions = reactive({
-  scope: 'all',
-  decks: [],
-  tags: [],
-  format: 'apkg'
-})
+const ankiStore = useAnkiStore()
 
 // 状态
 const importing = ref(false)
+const csvImporting = ref(false)
 const exporting = ref(false)
 
-// 历史记录
-const history = ref([
+// 文件上传
+const uploadRef = ref()
+const csvUploadRef = ref()
+const fileList = ref([])
+const csvFileList = ref([])
+const selectedFile = ref(null)
+const selectedCsvFile = ref(null)
+
+// 导出选项
+const selectedDeck = ref('')
+const selectedCards = ref('')
+const selectedModel = ref('')
+
+// 导入历史
+const importHistory = ref([
   {
-    id: '1',
-    type: 'import',
-    filename: 'javascript_cards.csv',
+    fileName: 'JavaScript基础.apkg',
+    type: 'apkg',
     status: 'success',
-    time: '2024-01-15 14:30:00',
-    details: '导入了 50 张卡片到 JavaScript 学习牌组'
+    importTime: '2024-01-15 14:30:00',
+    description: '成功导入 150 张卡片'
   },
   {
-    id: '2',
-    type: 'export',
-    filename: 'vue_cards.apkg',
+    fileName: 'Vue.js学习.csv',
+    type: 'csv',
     status: 'success',
-    time: '2024-01-15 13:45:00',
-    details: '导出了 Vue.js 基础牌组，共 67 张卡片'
-  },
-  {
-    id: '3',
-    type: 'import',
-    filename: 'anki_backup.apkg',
-    status: 'success',
-    time: '2024-01-15 12:20:00',
-    details: '导入了完整的 Anki 备份文件'
+    importTime: '2024-01-14 10:20:00',
+    description: '成功导入 89 张卡片'
   }
 ])
 
+// 处理文件选择
 const handleFileChange = (file: any) => {
-  console.log('选择的文件:', file)
-  ElMessage.success(`已选择文件: ${file.name}`)
+  selectedFile.value = file.raw
+  ElMessage.success('文件已选择')
 }
 
-const startImport = async () => {
-  if (!importOptions.deck) {
-    ElMessage.warning('请选择目标牌组')
+const handleCsvFileChange = (file: any) => {
+  selectedCsvFile.value = file.raw
+  ElMessage.success('CSV 文件已选择')
+}
+
+// 清空文件
+const clearFiles = () => {
+  fileList.value = []
+  selectedFile.value = null
+  uploadRef.value?.clearFiles()
+}
+
+const clearCsvFiles = () => {
+  csvFileList.value = []
+  selectedCsvFile.value = null
+  csvUploadRef.value?.clearFiles()
+}
+
+// 导入牌组文件
+const handleImport = async () => {
+  if (!selectedFile.value) {
+    ElMessage.warning('请先选择文件')
     return
   }
-  
+
   importing.value = true
-  
-  // 模拟导入过程
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
-  importing.value = false
-  ElMessage.success('导入完成！')
-  
-  // 添加历史记录
-  history.value.unshift({
-    id: Date.now().toString(),
-    type: 'import',
-    filename: 'imported_file.csv',
-    status: 'success',
-    time: new Date().toLocaleString(),
-    details: `导入了卡片到 ${importOptions.deck} 牌组`
-  })
+  try {
+    // 模拟导入过程
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // 添加到导入历史
+    importHistory.value.unshift({
+      fileName: selectedFile.value.name,
+      type: 'apkg',
+      status: 'success',
+      importTime: new Date().toLocaleString(),
+      description: '成功导入牌组文件'
+    })
+    
+    ElMessage.success('牌组导入成功')
+    clearFiles()
+  } catch (error) {
+    ElMessage.error('导入失败')
+  } finally {
+    importing.value = false
+  }
 }
 
-const startExport = async () => {
-  exporting.value = true
-  
-  // 模拟导出过程
-  await new Promise(resolve => setTimeout(resolve, 1500))
-  
-  exporting.value = false
-  ElMessage.success('导出完成！')
-  
-  // 添加历史记录
-  history.value.unshift({
-    id: Date.now().toString(),
-    type: 'export',
-    filename: `export_${Date.now()}.${exportOptions.format}`,
-    status: 'success',
-    time: new Date().toLocaleString(),
-    details: `导出了 ${exportOptions.scope} 数据`
-  })
+// 导入 CSV 文件
+const handleCsvImport = async () => {
+  if (!selectedCsvFile.value) {
+    ElMessage.warning('请先选择 CSV 文件')
+    return
+  }
+
+  csvImporting.value = true
+  try {
+    // 模拟导入过程
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    // 添加到导入历史
+    importHistory.value.unshift({
+      fileName: selectedCsvFile.value.name,
+      type: 'csv',
+      status: 'success',
+      importTime: new Date().toLocaleString(),
+      description: '成功导入 CSV 文件'
+    })
+    
+    ElMessage.success('CSV 文件导入成功')
+    clearCsvFiles()
+  } catch (error) {
+    ElMessage.error('导入失败')
+  } finally {
+    csvImporting.value = false
+  }
 }
+
+// 导出数据
+const exportData = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要导出所有数据吗？这将包含牌组、卡片、模板和标签信息。',
+      '确认导出',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }
+    )
+
+    exporting.value = true
+    
+    // 模拟导出过程
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    ElMessage.success('数据导出成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('导出失败')
+    }
+  } finally {
+    exporting.value = false
+  }
+}
+
+// 导出牌组
+const exportDeck = async () => {
+  exporting.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    ElMessage.success(`牌组 "${selectedDeck.value || '全部'}" 导出成功`)
+  } catch (error) {
+    ElMessage.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
+}
+
+// 导出卡片
+const exportCards = async () => {
+  exporting.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    ElMessage.success(`卡片导出成功`)
+  } catch (error) {
+    ElMessage.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
+}
+
+// 导出模板
+const exportModel = async () => {
+  exporting.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    ElMessage.success(`模板 "${selectedModel.value || '全部'}" 导出成功`)
+  } catch (error) {
+    ElMessage.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
+}
+
+// 测试连接
+const testConnection = async () => {
+  try {
+    await ankiStore.testConnection()
+    if (ankiStore.isConnected) {
+      ElMessage.success('连接成功')
+    } else {
+      ElMessage.error('连接失败')
+    }
+  } catch (error) {
+    ElMessage.error('连接测试失败')
+  }
+}
+
+// 页面加载时初始化
+onMounted(async () => {
+  if (ankiStore.isConnected) {
+    await ankiStore.initialize()
+  }
+})
 </script>
 
 <style scoped>
@@ -255,6 +485,9 @@ const startExport = async () => {
 }
 
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
 }
 
@@ -263,35 +496,85 @@ const startExport = async () => {
   color: #303133;
 }
 
-.import-content {
-  background: #fff;
-  border-radius: 4px;
-}
-
-.card-header {
+.header-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
 }
 
-.import-section,
-.export-section {
-  margin-bottom: 20px;
+.import-content {
+  background: #fff;
+  border-radius: 4px;
+  padding: 20px;
 }
 
-.import-section h4,
-.export-section h4 {
-  margin: 0 0 15px 0;
+.import-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.import-sections h3 {
+  margin: 0 0 20px 0;
   color: #303133;
+  font-size: 18px;
 }
 
-.import-options {
+.import-area {
+  padding: 20px;
+}
+
+.upload-actions {
   margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #ebeef5;
+  display: flex;
+  gap: 10px;
 }
 
-.upload-demo {
-  width: 100%;
+.export-area {
+  padding: 20px;
+  text-align: center;
+}
+
+.overview-card {
+  height: 120px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.overview-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.overview-content {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.overview-icon {
+  font-size: 48px;
+  color: #409eff;
+  margin-right: 20px;
+}
+
+.overview-info {
+  flex: 1;
+}
+
+.overview-number {
+  font-size: 32px;
+  font-weight: bold;
+  color: #303133;
+  margin-bottom: 5px;
+}
+
+.overview-label {
+  color: #606266;
+  font-size: 14px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
 }
 </style> 
