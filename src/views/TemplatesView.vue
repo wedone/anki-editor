@@ -1,14 +1,16 @@
 <template>
   <div class="templates-view">
-    <div class="page-header">
-      <h2>模板管理</h2>
-      <el-button type="primary" @click="showCreateDialog = true">
-        <el-icon><Plus /></el-icon>
-        新建模板
-      </el-button>
-    </div>
+    <el-card class="page-card" shadow="never">
+      <template #header>
+        <div class="page-header">
+          <span>模板管理</span>
+          <el-button type="primary" @click="showCreateDialog = true">
+            <el-icon><Plus /></el-icon>
+            新建模板
+          </el-button>
+        </div>
+      </template>
 
-    <div class="templates-content">
       <!-- 连接状态提示 -->
       <el-alert
         v-if="!ankiStore.isConnected"
@@ -81,7 +83,7 @@
           </el-button>
         </el-empty>
       </div>
-    </div>
+    </el-card>
 
     <!-- 创建模板对话框 -->
     <el-dialog
@@ -98,44 +100,38 @@
           <div class="fields-editor">
             <div v-for="(field, index) in createForm.fields" :key="index" class="field-item">
               <el-input v-model="createForm.fields[index]" placeholder="字段名称" />
-              <el-button type="danger" size="small" @click="removeField(index)">
+              <el-button size="small" type="danger" @click="removeField(index)">
                 <el-icon><Delete /></el-icon>
               </el-button>
             </div>
-            <el-button type="primary" size="small" @click="addField">
+            <el-button size="small" type="primary" @click="addField">
               <el-icon><Plus /></el-icon>
               添加字段
             </el-button>
           </div>
         </el-form-item>
-        <el-form-item label="卡片模板">
-          <div class="templates-editor">
-            <div v-for="(template, index) in createForm.templates" :key="index" class="template-item">
-              <div class="template-header">
-                <span>模板 {{ index + 1 }}</span>
-                <el-button type="danger" size="small" @click="removeTemplate(index)">
-                  <el-icon><Delete /></el-icon>
-                </el-button>
-              </div>
-              <el-input 
-                v-model="createForm.templates[index]" 
-                type="textarea" 
-                :rows="4"
-                placeholder="输入模板内容，使用 {{字段名}} 引用字段"
-              />
-            </div>
-            <el-button type="primary" size="small" @click="addTemplate">
-              <el-icon><Plus /></el-icon>
-              添加模板
-            </el-button>
-          </div>
+        <el-form-item label="正面模板">
+          <el-input 
+            v-model="createForm.frontTemplate" 
+            type="textarea" 
+            :rows="6"
+            placeholder="输入正面模板代码"
+          />
         </el-form-item>
-        <el-form-item label="CSS 样式">
+        <el-form-item label="背面模板">
+          <el-input 
+            v-model="createForm.backTemplate" 
+            type="textarea" 
+            :rows="6"
+            placeholder="输入背面模板代码"
+          />
+        </el-form-item>
+        <el-form-item label="CSS样式">
           <el-input 
             v-model="createForm.css" 
             type="textarea" 
-            :rows="6"
-            placeholder="输入 CSS 样式（可选）"
+            :rows="4"
+            placeholder="输入CSS样式代码"
           />
         </el-form-item>
       </el-form>
@@ -147,6 +143,66 @@
           </el-button>
         </span>
       </template>
+    </el-dialog>
+
+    <!-- 查看模板对话框 -->
+    <el-dialog
+      v-model="showViewDialog"
+      title="模板详情"
+      width="800px"
+    >
+      <div v-if="viewingTemplate" class="template-detail">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="模板名称">{{ viewingTemplate.name }}</el-descriptions-item>
+          <el-descriptions-item label="字段数量">{{ viewingTemplate.fields.length }}</el-descriptions-item>
+          <el-descriptions-item label="卡片模板数量">{{ viewingTemplate.templates?.length || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="最后修改">{{ formatDate(viewingTemplate.lastModified || Date.now()) }}</el-descriptions-item>
+        </el-descriptions>
+        
+        <div class="template-fields">
+          <h4>字段列表</h4>
+          <div class="fields-list">
+            <el-tag 
+              v-for="field in viewingTemplate.fields" 
+              :key="field" 
+              size="small"
+              style="margin-right: 8px; margin-bottom: 8px;"
+            >
+              {{ field }}
+            </el-tag>
+          </div>
+        </div>
+        
+        <div class="template-code">
+          <h4>模板代码</h4>
+          <el-tabs v-model="activeTab">
+            <el-tab-pane label="正面模板" name="front">
+              <el-input 
+                :model-value="viewingTemplate.templates?.[0]?.front || ''" 
+                type="textarea" 
+                :rows="8"
+                readonly
+              />
+            </el-tab-pane>
+            <el-tab-pane label="背面模板" name="back">
+              <el-input 
+                :model-value="viewingTemplate.templates?.[0]?.back || ''" 
+                type="textarea" 
+                :rows="8"
+                readonly
+              />
+            </el-tab-pane>
+            <el-tab-pane label="CSS样式" name="css">
+              <el-input 
+                :model-value="viewingTemplate.css || ''" 
+                type="textarea" 
+                :rows="8"
+                readonly
+              />
+            </el-tab-pane>
+          </el-tabs>
+        </div>
+      </div>
     </el-dialog>
 
     <!-- 编辑模板对话框 -->
@@ -164,44 +220,38 @@
           <div class="fields-editor">
             <div v-for="(field, index) in editForm.fields" :key="index" class="field-item">
               <el-input v-model="editForm.fields[index]" placeholder="字段名称" />
-              <el-button type="danger" size="small" @click="removeEditField(index)">
+              <el-button size="small" type="danger" @click="removeEditField(index)">
                 <el-icon><Delete /></el-icon>
               </el-button>
             </div>
-            <el-button type="primary" size="small" @click="addEditField">
+            <el-button size="small" type="primary" @click="addEditField">
               <el-icon><Plus /></el-icon>
               添加字段
             </el-button>
           </div>
         </el-form-item>
-        <el-form-item label="卡片模板">
-          <div class="templates-editor">
-            <div v-for="(template, index) in editForm.templates" :key="index" class="template-item">
-              <div class="template-header">
-                <span>模板 {{ index + 1 }}</span>
-                <el-button type="danger" size="small" @click="removeEditTemplate(index)">
-                  <el-icon><Delete /></el-icon>
-                </el-button>
-              </div>
-              <el-input 
-                v-model="editForm.templates[index]" 
-                type="textarea" 
-                :rows="4"
-                placeholder="输入模板内容，使用 {{字段名}} 引用字段"
-              />
-            </div>
-            <el-button type="primary" size="small" @click="addEditTemplate">
-              <el-icon><Plus /></el-icon>
-              添加模板
-            </el-button>
-          </div>
+        <el-form-item label="正面模板">
+          <el-input 
+            v-model="editForm.frontTemplate" 
+            type="textarea" 
+            :rows="6"
+            placeholder="输入正面模板代码"
+          />
         </el-form-item>
-        <el-form-item label="CSS 样式">
+        <el-form-item label="背面模板">
+          <el-input 
+            v-model="editForm.backTemplate" 
+            type="textarea" 
+            :rows="6"
+            placeholder="输入背面模板代码"
+          />
+        </el-form-item>
+        <el-form-item label="CSS样式">
           <el-input 
             v-model="editForm.css" 
             type="textarea" 
-            :rows="6"
-            placeholder="输入 CSS 样式（可选）"
+            :rows="4"
+            placeholder="输入CSS样式代码"
           />
         </el-form-item>
       </el-form>
@@ -213,44 +263,6 @@
           </el-button>
         </span>
       </template>
-    </el-dialog>
-
-    <!-- 查看模板对话框 -->
-    <el-dialog
-      v-model="showViewDialog"
-      title="查看模板"
-      width="800px"
-    >
-      <div v-if="viewingTemplate" class="template-detail">
-        <h3>{{ viewingTemplate.name }}</h3>
-        
-        <div class="detail-section">
-          <h4>字段</h4>
-          <div class="fields-display">
-            <el-tag 
-              v-for="field in viewingTemplate.fields" 
-              :key="field" 
-              size="small" 
-              style="margin-right: 8px; margin-bottom: 8px;"
-            >
-              {{ field }}
-            </el-tag>
-          </div>
-        </div>
-
-        <div class="detail-section">
-          <h4>卡片模板</h4>
-          <div v-for="(template, index) in viewingTemplate.templates" :key="index" class="template-display">
-            <h5>模板 {{ index + 1 }}</h5>
-            <pre>{{ template }}</pre>
-          </div>
-        </div>
-
-        <div v-if="viewingTemplate.css" class="detail-section">
-          <h4>CSS 样式</h4>
-          <pre>{{ viewingTemplate.css }}</pre>
-        </div>
-      </div>
     </el-dialog>
   </div>
 </template>
@@ -278,12 +290,14 @@ const editFormRef = ref()
 
 // 查看的模板
 const viewingTemplate = ref<Model | null>(null)
+const activeTab = ref('front')
 
 // 创建表单
 const createForm = reactive({
   name: '',
   fields: [''] as string[],
-  templates: [''] as string[],
+  frontTemplate: '',
+  backTemplate: '',
   css: ''
 })
 
@@ -291,7 +305,8 @@ const createForm = reactive({
 const editForm = reactive({
   name: '',
   fields: [''] as string[],
-  templates: [''] as string[],
+  frontTemplate: '',
+  backTemplate: '',
   css: ''
 })
 
@@ -357,7 +372,8 @@ const viewTemplate = (template: Model) => {
 const editTemplate = (template: Model) => {
   editForm.name = template.name
   editForm.fields = [...template.fields]
-  editForm.templates = template.templates.map((t: any) => t.qfmt || t)
+  editForm.frontTemplate = template.templates[0]?.front || ''
+  editForm.backTemplate = template.templates[0]?.back || ''
   editForm.css = template.css
   showEditDialog.value = true
 }
@@ -394,23 +410,17 @@ const handleCreateTemplate = async () => {
 
     // 过滤空字段
     const fields = createForm.fields.filter(f => f.trim())
-    const templates = createForm.templates.filter(t => t.trim())
     
     if (fields.length === 0) {
       ElMessage.error('请至少添加一个字段')
       return
     }
 
-    if (templates.length === 0) {
-      ElMessage.error('请至少添加一个卡片模板')
-      return
-    }
-
     // 构建模板数据
-    const cardTemplates = templates.map(template => ({
-      qfmt: template,
-      afmt: template
-    }))
+    const cardTemplates = [{
+      front: createForm.frontTemplate,
+      back: createForm.backTemplate
+    }]
 
     await ankiStore.createModel(createForm.name, fields, cardTemplates, createForm.css)
     
@@ -420,7 +430,8 @@ const handleCreateTemplate = async () => {
     // 重置表单
     createForm.name = ''
     createForm.fields = ['']
-    createForm.templates = ['']
+    createForm.frontTemplate = ''
+    createForm.backTemplate = ''
     createForm.css = ''
   } catch (error) {
     if (error !== false) {
@@ -451,6 +462,17 @@ const handleEditTemplate = async () => {
   }
 }
 
+// 格式化日期
+const formatDate = (timestamp: number) => {
+  const date = new Date(timestamp)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}`
+}
+
 // 页面加载时刷新数据
 onMounted(async () => {
   if (ankiStore.isConnected) {
@@ -464,22 +486,20 @@ onMounted(async () => {
   padding: 20px;
 }
 
+.page-card {
+  min-height: 500px;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
-.page-header h2 {
-  margin: 0;
+.page-header span {
+  font-size: 16px;
   color: #303133;
-}
-
-.templates-content {
-  background: #fff;
-  border-radius: 4px;
-  padding: 20px;
+  font-weight: 600;
 }
 
 .loading-container {
@@ -508,87 +528,43 @@ onMounted(async () => {
 }
 
 .fields-editor {
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .field-item {
   display: flex;
-  align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  align-items: center;
 }
 
 .field-item .el-input {
   flex: 1;
 }
 
-.templates-editor {
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  padding: 10px;
+.template-detail {
+  padding: 20px;
 }
 
-.template-item {
-  margin-bottom: 15px;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  padding: 10px;
-}
-
-.template-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.template-fields h4,
+.template-code h4 {
   margin-bottom: 10px;
-}
-
-.template-header span {
-  font-weight: bold;
   color: #303133;
 }
 
-.template-detail h3 {
-  margin: 0 0 20px 0;
-  color: #303133;
-}
-
-.detail-section {
-  margin-bottom: 20px;
-}
-
-.detail-section h4 {
-  margin: 0 0 10px 0;
-  color: #303133;
-  font-size: 16px;
-}
-
-.fields-display {
+.fields-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.template-display {
-  margin-bottom: 15px;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
+.template-code .el-tabs__content {
   padding: 10px;
 }
 
-.template-display h5 {
-  margin: 0 0 10px 0;
-  color: #303133;
-}
-
-.template-display pre {
-  background: #f5f7fa;
-  padding: 10px;
-  border-radius: 4px;
-  margin: 0;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+.template-code .el-tabs__content .el-input {
+  background-color: #f5f7fa;
 }
 
 .dialog-footer {

@@ -1,9 +1,11 @@
 <template>
   <div class="main-layout">
     <!-- 顶部导航栏 -->
-    <header class="header">
+    <el-header class="app-header" height="60px">
       <div class="header-content">
-        <h1 class="app-title">ANKI EDITOR</h1>
+        <div class="header-left">
+          <h1 class="app-title">ANKI EDITOR</h1>
+        </div>
         <div class="header-right">
           <el-tag 
             :type="connectionStatus.type" 
@@ -11,7 +13,7 @@
             class="connection-status"
             @click="testConnection"
           >
-            <el-icon v-if="ankiStore.isLoading"><Loading /></el-icon>
+            <el-icon v-if="ankiStore.isLoading" class="is-loading"><Loading /></el-icon>
             {{ connectionStatus.text }}
           </el-tag>
           <el-button 
@@ -30,132 +32,175 @@
           </el-button>
         </div>
       </div>
-    </header>
+    </el-header>
 
     <!-- 主体内容 -->
-    <div class="main-content">
+    <el-container class="main-container">
       <!-- 侧边栏 -->
-      <aside class="sidebar">
-        <div class="sidebar-content">
+      <el-aside width="280px" class="app-sidebar">
+        <el-card class="sidebar-card" shadow="never">
+          <template #header>
+            <span>导航菜单</span>
+          </template>
+          
           <!-- 牌组管理 -->
-          <div class="sidebar-section">
-            <div class="section-header" @click="toggleDeckTree">
-              <el-icon><Folder /></el-icon>
-              <span>牌组</span>
-              <el-icon class="expand-icon" :class="{ 'expanded': deckTreeExpanded }">
-                <ArrowDown />
-              </el-icon>
-            </div>
-            <div v-show="deckTreeExpanded" class="tree-container">
-              <el-tree
-                :data="deckTreeData"
-                :props="treeProps"
-                node-key="id"
-                :expand-on-click-node="false"
-                @node-click="handleDeckClick"
-              >
-                <template #default="{ node, data }">
-                  <span class="tree-node">
-                    <el-icon v-if="data.type === 'deck'"><Folder /></el-icon>
-                    <el-icon v-else><Document /></el-icon>
-                    {{ node.label }}
-                  </span>
-                </template>
-              </el-tree>
-            </div>
-          </div>
+          <el-collapse v-model="activeCollapse">
+            <el-collapse-item title="牌组管理" name="decks">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><Folder /></el-icon>
+                  <span>牌组管理</span>
+                </div>
+              </template>
+              <div class="tree-container">
+                <el-tree
+                  :data="deckTreeData"
+                  :props="treeProps"
+                  node-key="id"
+                  :expand-on-click-node="false"
+                  @node-click="handleDeckClick"
+                >
+                  <template #default="{ node, data }">
+                    <span class="tree-node">
+                      <el-icon v-if="data.type === 'deck'"><Folder /></el-icon>
+                      <el-icon v-else><Document /></el-icon>
+                      {{ node.label }}
+                    </span>
+                  </template>
+                </el-tree>
+              </div>
+            </el-collapse-item>
 
-          <!-- 模板管理 -->
-          <div class="sidebar-section">
-            <div class="section-header" @click="toggleTemplateTree">
-              <el-icon><Files /></el-icon>
-              <span>模板</span>
-              <el-icon class="expand-icon" :class="{ 'expanded': templateTreeExpanded }">
-                <ArrowDown />
-              </el-icon>
-            </div>
-            <div v-show="templateTreeExpanded" class="tree-container">
-              <el-tree
-                :data="templateTreeData"
-                :props="treeProps"
-                node-key="id"
-                :expand-on-click-node="false"
-                @node-click="handleTemplateClick"
-              >
-                <template #default="{ node, data }">
-                  <span class="tree-node">
-                    <el-icon><Document /></el-icon>
-                    {{ node.label }}
-                  </span>
-                </template>
-              </el-tree>
-            </div>
-          </div>
+            <!-- 卡片管理 -->
+            <el-collapse-item title="卡片管理" name="cards">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><Document /></el-icon>
+                  <span>卡片管理</span>
+                </div>
+              </template>
+              <div class="menu-items">
+                <div class="menu-item" @click="openCards">
+                  <el-icon><Document /></el-icon>
+                  <span>浏览卡片</span>
+                </div>
+                <div class="menu-item" @click="openCardManager">
+                  <el-icon><Edit /></el-icon>
+                  <span>卡片编辑器</span>
+                </div>
+              </div>
+            </el-collapse-item>
 
-          <!-- 标签管理 -->
-          <div class="sidebar-section">
-            <div class="section-header" @click="toggleTagTree">
-              <el-icon><Collection /></el-icon>
-              <span>标签</span>
-              <el-icon class="expand-icon" :class="{ 'expanded': tagTreeExpanded }">
-                <ArrowDown />
-              </el-icon>
-            </div>
-            <div v-show="tagTreeExpanded" class="tree-container">
-              <el-tree
-                :data="tagTreeData"
-                :props="treeProps"
-                node-key="id"
-                :expand-on-click-node="false"
-                @node-click="handleTagClick"
-              >
-                <template #default="{ node, data }">
-                  <span class="tree-node">
-                    <el-icon><PriceTag /></el-icon>
-                    {{ node.label }}
-                  </span>
-                </template>
-              </el-tree>
-            </div>
-          </div>
+            <!-- 模板管理 -->
+            <el-collapse-item title="模板管理" name="templates">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><Files /></el-icon>
+                  <span>模板管理</span>
+                </div>
+              </template>
+              <div class="tree-container">
+                <el-tree
+                  :data="templateTreeData"
+                  :props="treeProps"
+                  node-key="id"
+                  :expand-on-click-node="false"
+                  @node-click="handleTemplateClick"
+                >
+                  <template #default="{ node, data }">
+                    <span class="tree-node">
+                      <el-icon><Document /></el-icon>
+                      {{ node.label }}
+                    </span>
+                  </template>
+                </el-tree>
+              </div>
+            </el-collapse-item>
 
-          <!-- 统计 -->
-          <div class="sidebar-section">
-            <div class="section-header" @click="openStats">
-              <el-icon><DataAnalysis /></el-icon>
-              <span>统计</span>
-            </div>
-          </div>
+            <!-- 标签管理 -->
+            <el-collapse-item title="标签管理" name="tags">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><PriceTag /></el-icon>
+                  <span>标签管理</span>
+                </div>
+              </template>
+              <div class="tree-container">
+                <el-tree
+                  :data="tagTreeData"
+                  :props="treeProps"
+                  node-key="id"
+                  :expand-on-click-node="false"
+                  @node-click="handleTagClick"
+                >
+                  <template #default="{ node, data }">
+                    <span class="tree-node">
+                      <el-icon><PriceTag /></el-icon>
+                      {{ node.label }}
+                    </span>
+                  </template>
+                </el-tree>
+              </div>
+            </el-collapse-item>
 
-          <!-- 设置 -->
-          <div class="sidebar-section">
-            <div class="section-header" @click="openSettings">
-              <el-icon><Setting /></el-icon>
-              <span>设置</span>
-            </div>
-          </div>
-        </div>
-      </aside>
+            <!-- 统计 -->
+            <el-collapse-item title="统计分析" name="stats">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><DataAnalysis /></el-icon>
+                  <span>统计分析</span>
+                </div>
+              </template>
+              <div class="menu-items">
+                <div class="menu-item" @click="openStats">
+                  <el-icon><DataAnalysis /></el-icon>
+                  <span>学习统计</span>
+                </div>
+              </div>
+            </el-collapse-item>
+
+            <!-- 设置 -->
+            <el-collapse-item title="系统设置" name="settings">
+              <template #title>
+                <div class="collapse-title">
+                  <el-icon><Setting /></el-icon>
+                  <span>系统设置</span>
+                </div>
+              </template>
+              <div class="menu-items">
+                <div class="menu-item" @click="openSettings">
+                  <el-icon><Setting /></el-icon>
+                  <span>应用设置</span>
+                </div>
+              </div>
+            </el-collapse-item>
+          </el-collapse>
+        </el-card>
+      </el-aside>
 
       <!-- 主内容区域 -->
-      <main class="content">
-        <div class="content-header">
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item>首页</el-breadcrumb-item>
-            <el-breadcrumb-item v-if="currentModule">{{ currentModule }}</el-breadcrumb-item>
-          </el-breadcrumb>
-          <div class="content-actions">
-            <el-button type="primary" size="small" @click="refreshData">
-              <el-icon><Refresh /></el-icon>
-              刷新
-            </el-button>
+      <el-main class="app-main">
+        <el-card class="content-card" shadow="never">
+          <template #header>
+            <div class="content-header">
+              <el-breadcrumb separator="/">
+                <el-breadcrumb-item>首页</el-breadcrumb-item>
+                <el-breadcrumb-item v-if="currentModule">{{ currentModule }}</el-breadcrumb-item>
+              </el-breadcrumb>
+              <div class="content-actions">
+                <el-button type="primary" size="small" @click="refreshData">
+                  <el-icon><Refresh /></el-icon>
+                  刷新
+                </el-button>
+              </div>
+            </div>
+          </template>
+          <div class="content-body">
+            <router-view />
           </div>
-        </div>
-        <div class="content-body">
-          <router-view />
-        </div>
-      </main>
-    </div>
+        </el-card>
+      </el-main>
+    </el-container>
   </div>
 </template>
 
@@ -190,19 +235,28 @@ const connectionStatus = computed(() => {
   }
 })
 
-// 侧边栏展开状态
-const deckTreeExpanded = ref(true)
-const templateTreeExpanded = ref(false)
-const tagTreeExpanded = ref(false)
-
-// 当前模块
+// 状态
 const currentModule = ref('')
+const activeCollapse = ref(['decks', 'cards', 'templates', 'tags', 'stats', 'settings'])
 
-// 树形数据
+// 防抖处理
+const debounce = (func: Function, wait: number) => {
+  let timeout: number
+  return function executedFunction(...args: any[]) {
+    const later = () => {
+      clearTimeout(timeout)
+      func(...args)
+    }
+    clearTimeout(timeout)
+    timeout = setTimeout(later, wait)
+  }
+}
+
+// 树形数据 - 使用computed优化性能
 const deckTreeData = computed(() => {
   return ankiStore.decks.map(deck => ({
     id: deck.name,
-    label: deck.name,
+    name: deck.name,
     type: 'deck'
   }))
 })
@@ -210,79 +264,78 @@ const deckTreeData = computed(() => {
 const templateTreeData = computed(() => {
   return ankiStore.models.map(model => ({
     id: model.name,
-    label: model.name,
+    name: model.name,
     type: 'template'
   }))
 })
 
 const tagTreeData = computed(() => {
-  return ankiStore.tags.map(tag => ({
+  return ankiStore.tags.slice(0, 20).map(tag => ({ // 限制显示前20个标签
     id: tag,
-    label: tag,
+    name: tag,
     type: 'tag'
   }))
 })
 
+// 树形配置
 const treeProps = {
   children: 'children',
-  label: 'label'
+  label: 'name'
 }
 
-// 方法
-const toggleDeckTree = () => {
-  deckTreeExpanded.value = !deckTreeExpanded.value
-}
-
-const toggleTemplateTree = () => {
-  templateTreeExpanded.value = !templateTreeExpanded.value
-}
-
-const toggleTagTree = () => {
-  tagTreeExpanded.value = !tagTreeExpanded.value
-}
-
-const handleDeckClick = (data: any) => {
+// 优化点击处理 - 添加防抖
+const handleDeckClick = debounce((data: any) => {
   console.log('点击牌组:', data)
   currentModule.value = '牌组管理'
   router.push('/decks')
-}
+}, 100)
 
-const handleTemplateClick = (data: any) => {
+const handleTemplateClick = debounce((data: any) => {
   console.log('点击模板:', data)
   currentModule.value = '模板管理'
   router.push('/templates')
-}
+}, 100)
 
-const handleTagClick = (data: any) => {
+const handleTagClick = debounce((data: any) => {
   console.log('点击标签:', data)
   currentModule.value = '标签管理'
   router.push('/tags')
-}
+}, 100)
 
-const openStats = () => {
+const openCards = debounce(() => {
+  currentModule.value = '卡片管理'
+  router.push('/cards')
+}, 100)
+
+const openCardManager = debounce(() => {
+  currentModule.value = '卡片编辑器'
+  router.push('/card-manager')
+}, 100)
+
+const openStats = debounce(() => {
   currentModule.value = '统计'
   router.push('/stats')
-}
+}, 100)
 
-const openSettings = () => {
+const openSettings = debounce(() => {
   currentModule.value = '设置'
   router.push('/settings')
-}
+}, 100)
 
-const openHelp = () => {
+const openHelp = debounce(() => {
   ElMessage.info('帮助功能开发中...')
-}
+}, 100)
 
-const refreshData = async () => {
+const refreshData = debounce(async () => {
   try {
     await ankiStore.initialize()
     ElMessage.success('数据已刷新')
   } catch (error) {
     ElMessage.error('刷新数据失败')
   }
-}
+}, 100)
 
-const testConnection = async () => {
+const testConnection = debounce(async () => {
   try {
     await ankiStore.testConnection()
     if (ankiStore.isConnected) {
@@ -294,7 +347,7 @@ const testConnection = async () => {
   } catch (error) {
     ElMessage.error('连接测试失败')
   }
-}
+}, 100)
 
 onMounted(async () => {
   await ankiStore.initialize()
@@ -308,11 +361,10 @@ onMounted(async () => {
   flex-direction: column;
 }
 
-.header {
+.app-header {
   background: #fff;
   border-bottom: 1px solid #e4e7ed;
   padding: 0 20px;
-  height: 60px;
   display: flex;
   align-items: center;
 }
@@ -322,6 +374,11 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
 }
 
 .app-title {
@@ -342,52 +399,72 @@ onMounted(async () => {
   cursor: pointer;
 }
 
-.main-content {
+.main-container {
   flex: 1;
   display: flex;
   overflow: hidden;
 }
 
-.sidebar {
-  width: 250px;
+.app-sidebar {
   background: #f5f7fa;
   border-right: 1px solid #e4e7ed;
   overflow-y: auto;
 }
 
-.sidebar-content {
-  padding: 20px 0;
+.sidebar-card {
+  height: 100%;
 }
 
-.sidebar-section {
-  margin-bottom: 10px;
+.sidebar-card .el-card__header {
+  padding-bottom: 10px;
 }
 
-.section-header {
+.collapse-title {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  user-select: none;
+  gap: 8px;
 }
 
-.section-header:hover {
-  background: #ecf5ff;
-}
-
-.section-header .el-icon {
-  margin-right: 8px;
+.collapse-title .el-icon {
   font-size: 16px;
 }
 
-.expand-icon {
-  margin-left: auto;
-  transition: transform 0.3s;
+.menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 20px;
 }
 
-.expand-icon.expanded {
-  transform: rotate(180deg);
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.menu-item:hover {
+  background: #ecf5ff;
+  color: #409eff;
+  transform: translateX(2px);
+}
+
+.menu-item:active {
+  transform: translateX(1px);
+}
+
+.menu-item .el-icon {
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.menu-item:hover .el-icon {
+  transform: scale(1.1);
 }
 
 .tree-container {
@@ -398,18 +475,40 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 5px;
+  font-size: 14px;
+  color: #606266;
+  transition: all 0.2s ease;
 }
 
-.content {
+.tree-node:hover {
+  color: #409eff;
+}
+
+.tree-node .el-icon {
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.tree-node:hover .el-icon {
+  transform: scale(1.1);
+}
+
+.app-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   background: #fff;
 }
 
+.content-card {
+  height: 100%;
+}
+
+.content-card .el-card__header {
+  padding-bottom: 10px;
+}
+
 .content-header {
-  padding: 15px 20px;
-  border-bottom: 1px solid #e4e7ed;
   display: flex;
   justify-content: space-between;
   align-items: center;

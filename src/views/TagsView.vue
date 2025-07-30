@@ -1,26 +1,28 @@
 <template>
   <div class="tags-view">
-    <div class="page-header">
-      <h2>标签管理</h2>
-      <div class="header-actions">
-        <el-input 
-          v-model="searchKeyword" 
-          placeholder="搜索标签" 
-          style="width: 200px; margin-right: 10px;"
-          clearable
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-        <el-button type="primary" @click="showCreateDialog = true">
-          <el-icon><Plus /></el-icon>
-          新建标签
-        </el-button>
-      </div>
-    </div>
+    <el-card class="page-card" shadow="never">
+      <template #header>
+        <div class="page-header">
+          <span>标签管理</span>
+          <div class="header-actions">
+            <el-input 
+              v-model="searchKeyword" 
+              placeholder="搜索标签" 
+              style="width: 200px; margin-right: 10px;"
+              clearable
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-button type="primary" @click="showCreateDialog = true">
+              <el-icon><Plus /></el-icon>
+              新建标签
+            </el-button>
+          </div>
+        </div>
+      </template>
 
-    <div class="tags-content">
       <!-- 连接状态提示 -->
       <el-alert
         v-if="!ankiStore.isConnected"
@@ -46,21 +48,21 @@
             style="margin-bottom: 20px;"
           >
             <el-card class="tag-card" shadow="hover">
-              <div class="tag-content">
+              <template #header>
                 <div class="tag-header">
                   <el-icon><PriceTag /></el-icon>
                   <span class="tag-name">{{ tag }}</span>
                 </div>
-                <div class="tag-actions">
-                  <el-button size="small" @click="viewTag(tag)">
-                    <el-icon><View /></el-icon>
-                    查看
-                  </el-button>
-                  <el-button size="small" type="danger" @click="deleteTag(tag)">
-                    <el-icon><Delete /></el-icon>
-                    删除
-                  </el-button>
-                </div>
+              </template>
+              <div class="tag-actions">
+                <el-button size="small" @click="viewTag(tag)">
+                  <el-icon><View /></el-icon>
+                  查看
+                </el-button>
+                <el-button size="small" type="danger" @click="deleteTag(tag)">
+                  <el-icon><Delete /></el-icon>
+                  删除
+                </el-button>
               </div>
             </el-card>
           </el-col>
@@ -75,7 +77,7 @@
           </el-button>
         </el-empty>
       </div>
-    </div>
+    </el-card>
 
     <!-- 创建标签对话框 -->
     <el-dialog
@@ -116,10 +118,10 @@
       width="600px"
     >
       <div v-if="viewingTag" class="tag-detail">
-        <div class="tag-info">
-          <h3>{{ viewingTag }}</h3>
-          <p>使用此标签的卡片数量：{{ tagUsageCount }}</p>
-        </div>
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="标签名称">{{ viewingTag }}</el-descriptions-item>
+          <el-descriptions-item label="使用数量">{{ tagUsageCount }}</el-descriptions-item>
+        </el-descriptions>
         
         <div class="tag-usage">
           <h4>使用此标签的卡片</h4>
@@ -305,27 +307,25 @@ onMounted(async () => {
   padding: 20px;
 }
 
+.page-card {
+  min-height: 500px;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
-.page-header h2 {
-  margin: 0;
+.page-header span {
+  font-size: 16px;
   color: #303133;
+  font-weight: 600;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-}
-
-.tags-content {
-  background: #fff;
-  border-radius: 4px;
-  padding: 20px;
 }
 
 .loading-container {
@@ -347,18 +347,10 @@ onMounted(async () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.tag-content {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
 .tag-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
 }
 
 .tag-name {
@@ -370,6 +362,7 @@ onMounted(async () => {
 .tag-actions {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 
 .empty-state {
@@ -377,14 +370,8 @@ onMounted(async () => {
   padding: 60px 20px;
 }
 
-.tag-detail h3 {
-  margin: 0 0 10px 0;
-  color: #303133;
-}
-
-.tag-info p {
-  color: #606266;
-  margin: 0 0 20px 0;
+.tag-usage {
+  margin-top: 20px;
 }
 
 .tag-usage h4 {

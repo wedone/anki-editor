@@ -52,157 +52,162 @@ onMounted(async () => {
 
 <template>
   <div class="home-view">
-    <div class="welcome-section">
-      <h1>欢迎使用 Anki Editor</h1>
-      <p>基于 AnkiConnect 的自定义 Anki 客户端</p>
-    </div>
+    <el-card class="page-card" shadow="never">
+      <template #header>
+        <div class="page-header">
+          <span>欢迎使用 Anki Editor</span>
+        </div>
+      </template>
 
-    <!-- 连接状态提示 -->
-    <el-alert
-      v-if="!ankiStore.isConnected"
-      title="未连接到 Anki"
-      description="请先在设置中配置 AnkiConnect 连接，然后刷新页面"
-      type="warning"
-      show-icon
-      style="margin-bottom: 20px;"
-    />
+      <!-- 连接状态提示 -->
+      <el-alert
+        v-if="!ankiStore.isConnected"
+        title="未连接到 Anki"
+        description="请先在设置中配置 AnkiConnect 连接"
+        type="warning"
+        show-icon
+        style="margin-bottom: 20px;"
+      />
 
-    <!-- 统计卡片 -->
-    <div v-if="ankiStore.isConnected" class="stats-section">
-      <el-row :gutter="20">
+      <!-- 快速操作 -->
+      <el-row :gutter="20" class="quick-actions">
         <el-col :span="6">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon">
+          <el-card class="action-card" shadow="hover" @click="navigateTo('/decks')">
+            <div class="action-content">
+              <div class="action-icon">
                 <el-icon><Folder /></el-icon>
               </div>
-              <div class="stat-info">
-                <div class="stat-number">{{ ankiStore.decks.length }}</div>
-                <div class="stat-label">牌组数量</div>
+              <div class="action-info">
+                <h3>牌组管理</h3>
+                <p>管理您的 Anki 牌组</p>
               </div>
             </div>
           </el-card>
         </el-col>
+        
         <el-col :span="6">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon">
+          <el-card class="action-card" shadow="hover" @click="navigateTo('/cards')">
+            <div class="action-content">
+              <div class="action-icon">
                 <el-icon><Document /></el-icon>
               </div>
-              <div class="stat-info">
-                <div class="stat-number">{{ ankiStore.notes.length }}</div>
-                <div class="stat-label">卡片数量</div>
+              <div class="action-info">
+                <h3>卡片管理</h3>
+                <p>浏览和编辑卡片</p>
               </div>
             </div>
           </el-card>
         </el-col>
+        
         <el-col :span="6">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon">
+          <el-card class="action-card" shadow="hover" @click="navigateTo('/templates')">
+            <div class="action-content">
+              <div class="action-icon">
                 <el-icon><Files /></el-icon>
               </div>
-              <div class="stat-info">
-                <div class="stat-number">{{ ankiStore.models.length }}</div>
-                <div class="stat-label">模板数量</div>
+              <div class="action-info">
+                <h3>模板管理</h3>
+                <p>管理卡片模板</p>
               </div>
             </div>
           </el-card>
         </el-col>
+        
         <el-col :span="6">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon">
+          <el-card class="action-card" shadow="hover" @click="navigateTo('/tags')">
+            <div class="action-content">
+              <div class="action-icon">
                 <el-icon><PriceTag /></el-icon>
               </div>
-              <div class="stat-info">
-                <div class="stat-number">{{ ankiStore.tags.length }}</div>
-                <div class="stat-label">标签数量</div>
+              <div class="action-info">
+                <h3>标签管理</h3>
+                <p>管理卡片标签</p>
               </div>
             </div>
           </el-card>
         </el-col>
       </el-row>
-    </div>
 
-    <!-- 快速操作 -->
-    <div class="quick-actions">
-      <h2>快速操作</h2>
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <el-card class="action-card" @click="navigateTo('/decks')">
-            <div class="action-content">
-              <el-icon class="action-icon"><Folder /></el-icon>
-              <h3>管理牌组</h3>
-              <p>创建、编辑和删除牌组</p>
+      <!-- 统计概览 -->
+      <el-row :gutter="20" class="stats-overview">
+        <el-col :span="8">
+          <el-card class="stat-card" shadow="never">
+            <template #header>
+              <span>牌组统计</span>
+            </template>
+            <div class="stat-content">
+              <div class="stat-number">{{ ankiStore.decks.length }}</div>
+              <div class="stat-label">牌组数量</div>
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
-          <el-card class="action-card" @click="navigateTo('/cards')">
-            <div class="action-content">
-              <el-icon class="action-icon"><Document /></el-icon>
-              <h3>管理卡片</h3>
-              <p>添加、编辑和删除卡片</p>
+        
+        <el-col :span="8">
+          <el-card class="stat-card" shadow="never">
+            <template #header>
+              <span>卡片统计</span>
+            </template>
+            <div class="stat-content">
+              <div class="stat-number">{{ ankiStore.notes.length }}</div>
+              <div class="stat-label">卡片数量</div>
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
-          <el-card class="action-card" @click="navigateTo('/templates')">
-            <div class="action-content">
-              <el-icon class="action-icon"><Files /></el-icon>
-              <h3>管理模板</h3>
-              <p>创建和配置笔记模板</p>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card class="action-card" @click="navigateTo('/import')">
-            <div class="action-content">
-              <el-icon class="action-icon"><Upload /></el-icon>
-              <h3>导入导出</h3>
-              <p>导入和导出 Anki 数据</p>
+        
+        <el-col :span="8">
+          <el-card class="stat-card" shadow="never">
+            <template #header>
+              <span>模板统计</span>
+            </template>
+            <div class="stat-content">
+              <div class="stat-number">{{ ankiStore.models.length }}</div>
+              <div class="stat-label">模板数量</div>
             </div>
           </el-card>
         </el-col>
       </el-row>
-    </div>
 
-    <!-- 最近活动 -->
-    <div class="recent-activities">
-      <h2>最近活动</h2>
-      <el-card>
-        <el-timeline>
-          <el-timeline-item
-            v-for="(activity, index) in recentActivities"
-            :key="index"
-            :timestamp="activity.time"
-            :type="activity.type"
-          >
-            {{ activity.content }}
-          </el-timeline-item>
-        </el-timeline>
+      <!-- 最近活动 -->
+      <el-card class="section-card" shadow="never">
+        <template #header>
+          <span>最近活动</span>
+        </template>
+        <div class="recent-activity">
+          <el-empty description="暂无最近活动" />
+        </div>
       </el-card>
-    </div>
 
-    <!-- 系统信息 -->
-    <div class="system-info">
-      <h2>系统信息</h2>
-      <el-card>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="应用版本">1.0.0</el-descriptions-item>
-          <el-descriptions-item label="Vue 版本">3.x</el-descriptions-item>
-          <el-descriptions-item label="Element Plus">2.x</el-descriptions-item>
-          <el-descriptions-item label="AnkiConnect">6.x</el-descriptions-item>
-          <el-descriptions-item label="连接状态">
-            <el-tag :type="ankiStore.isConnected ? 'success' : 'danger'">
-              {{ ankiStore.isConnected ? '已连接' : '未连接' }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="最后更新">{{ lastUpdateTime }}</el-descriptions-item>
-        </el-descriptions>
+      <!-- 快速入门 -->
+      <el-card class="section-card" shadow="never">
+        <template #header>
+          <span>快速入门</span>
+        </template>
+        <div class="quick-start">
+          <el-steps :active="1" direction="vertical">
+            <el-step title="连接 Anki" description="在设置中配置 AnkiConnect 连接">
+              <template #icon>
+                <el-icon><Connection /></el-icon>
+              </template>
+            </el-step>
+            <el-step title="管理牌组" description="创建和管理您的牌组">
+              <template #icon>
+                <el-icon><Folder /></el-icon>
+              </template>
+            </el-step>
+            <el-step title="编辑卡片" description="创建和编辑卡片内容">
+              <template #icon>
+                <el-icon><Document /></el-icon>
+              </template>
+            </el-step>
+            <el-step title="使用模板" description="选择合适的卡片模板">
+              <template #icon>
+                <el-icon><Files /></el-icon>
+              </template>
+            </el-step>
+          </el-steps>
+        </div>
       </el-card>
-    </div>
+    </el-card>
   </div>
 </template>
 
@@ -211,75 +216,28 @@ onMounted(async () => {
   padding: 20px;
 }
 
-.welcome-section {
-  text-align: center;
-  margin-bottom: 40px;
+.page-card {
+  min-height: 500px;
 }
 
-.welcome-section h1 {
-  color: #303133;
-  margin-bottom: 10px;
-}
-
-.welcome-section p {
-  color: #606266;
-  font-size: 16px;
-}
-
-.stats-section {
-  margin-bottom: 40px;
-}
-
-.stat-card {
-  height: 120px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.stat-content {
+.page-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  height: 100%;
 }
 
-.stat-icon {
-  font-size: 48px;
-  color: #409eff;
-  margin-right: 20px;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-number {
-  font-size: 32px;
-  font-weight: bold;
+.page-header span {
+  font-size: 16px;
   color: #303133;
-  margin-bottom: 5px;
-}
-
-.stat-label {
-  color: #606266;
-  font-size: 14px;
+  font-weight: 600;
 }
 
 .quick-actions {
-  margin-bottom: 40px;
-}
-
-.quick-actions h2 {
-  margin-bottom: 20px;
-  color: #303133;
+  margin-bottom: 30px;
 }
 
 .action-card {
-  height: 150px;
+  height: 120px;
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -290,42 +248,69 @@ onMounted(async () => {
 }
 
 .action-content {
-  text-align: center;
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .action-icon {
-  font-size: 48px;
+  font-size: 40px;
   color: #409eff;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
-.action-content h3 {
-  margin: 0 0 10px 0;
+.action-info h3 {
+  margin: 0 0 5px 0;
   color: #303133;
+  font-size: 16px;
 }
 
-.action-content p {
+.action-info p {
   margin: 0;
   color: #606266;
   font-size: 14px;
 }
 
-.recent-activities {
-  margin-bottom: 40px;
+.stats-overview {
+  margin-bottom: 30px;
 }
 
-.recent-activities h2 {
-  margin-bottom: 20px;
-  color: #303133;
+.stat-card {
+  height: 100px;
 }
 
-.system-info h2 {
-  margin-bottom: 20px;
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: bold;
   color: #303133;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  color: #909399;
+  font-size: 14px;
+}
+
+.section-card {
+  margin-bottom: 20px;
+}
+
+.recent-activity {
+  min-height: 200px;
+}
+
+.quick-start {
+  padding: 20px;
 }
 </style>

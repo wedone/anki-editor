@@ -1,14 +1,16 @@
 <template>
   <div class="decks-view">
-    <div class="page-header">
-      <h2>牌组管理</h2>
-      <el-button type="primary" @click="showCreateDialog = true">
-        <el-icon><Plus /></el-icon>
-        新建牌组
-      </el-button>
-    </div>
+    <el-card class="page-card" shadow="never">
+      <template #header>
+        <div class="page-header">
+          <span>牌组管理</span>
+          <el-button type="primary" @click="showCreateDialog = true">
+            <el-icon><Plus /></el-icon>
+            新建牌组
+          </el-button>
+        </div>
+      </template>
 
-    <div class="decks-content">
       <!-- 连接状态提示 -->
       <el-alert
         v-if="!ankiStore.isConnected"
@@ -45,11 +47,15 @@
               {{ formatDate(row.lastModified) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column label="操作" width="280" fixed="right">
             <template #default="{ row }">
               <el-button size="small" @click="viewDeck(row)">
                 <el-icon><View /></el-icon>
                 查看
+              </el-button>
+              <el-button size="small" type="success" @click="manageCards(row)">
+                <el-icon><Document /></el-icon>
+                卡片管理
               </el-button>
               <el-button size="small" type="primary" @click="editDeck(row)">
                 <el-icon><Edit /></el-icon>
@@ -72,7 +78,7 @@
           </el-button>
         </el-empty>
       </div>
-    </div>
+    </el-card>
 
     <!-- 创建牌组对话框 -->
     <el-dialog
@@ -123,6 +129,22 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 卡片管理对话框 -->
+    <el-dialog
+      v-model="showCardsDialog"
+      :title="`卡片管理 - ${currentDeck?.name || ''}`"
+      width="90%"
+      :close-on-click-modal="false"
+      class="cards-management-dialog"
+    >
+      <CardManager 
+        v-if="currentDeck"
+        :deck-name="currentDeck.name"
+        :cards="deckCards"
+        @update:cards="updateDeckCards"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -131,16 +153,20 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAnkiStore } from '@/stores/ankiStore'
 import type { Deck } from '@/api/ankiConnect'
+import type { Note } from '@/api/ankiConnect'
+import CardManager from '@/components/CardManager.vue' // 导入 CardManager 组件
 
 const ankiStore = useAnkiStore()
 
 // 对话框状态
 const showCreateDialog = ref(false)
 const showEditDialog = ref(false)
+const showCardsDialog = ref(false) // 新增：卡片管理对话框状态
 
 // 加载状态
 const creating = ref(false)
 const editing = ref(false)
+const saving = ref(false) // 新增：卡片保存状态
 
 // 表单引用
 const createFormRef = ref()
@@ -172,6 +198,10 @@ const editRules = {
     { min: 1, max: 50, message: '牌组名称长度在 1 到 50 个字符', trigger: 'blur' }
   ]
 }
+
+// 卡片管理对话框相关状态
+const currentDeck = ref<Deck | null>(null)
+const deckCards = ref<Note[]>([])
 
 // 格式化日期
 const formatDate = (timestamp: number) => {
@@ -259,6 +289,27 @@ const handleEditDeck = async () => {
   }
 }
 
+// 管理卡片
+const manageCards = async (deck: Deck) => {
+  try {
+    currentDeck.value = deck
+    deckCards.value = []
+    showCardsDialog.value = true
+    
+    // CardManager 现在会自己处理数据加载和缓存
+    ElMessage.info('正在打开卡片管理...')
+  } catch (error) {
+    ElMessage.error('打开卡片管理失败')
+    console.error('打开卡片管理失败:', error)
+    showCardsDialog.value = false
+  }
+}
+
+// 更新牌组卡片列表
+const updateDeckCards = (newCards: Note[]) => {
+  deckCards.value = newCards
+}
+
 // 页面加载时刷新数据
 onMounted(async () => {
   if (ankiStore.isConnected) {
@@ -272,22 +323,20 @@ onMounted(async () => {
   padding: 20px;
 }
 
+.page-card {
+  min-height: 500px;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
-.page-header h2 {
-  margin: 0;
+.page-header span {
+  font-size: 16px;
   color: #303133;
-}
-
-.decks-content {
-  background: #fff;
-  border-radius: 4px;
-  padding: 20px;
+  font-weight: 600;
 }
 
 .loading-container {
@@ -313,5 +362,11 @@ onMounted(async () => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+/* 卡片管理对话框样式 */
+.cards-management-dialog .el-dialog__body {
+  padding: 0;
+  height: 80vh;
 }
 </style> 
