@@ -9,7 +9,9 @@
             :type="connectionStatus.type" 
             size="small"
             class="connection-status"
+            @click="testConnection"
           >
+            <el-icon v-if="ankiStore.isLoading"><Loading /></el-icon>
             {{ connectionStatus.text }}
           </el-tag>
           <el-button 
@@ -158,16 +160,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useAnkiStore } from '@/stores/ankiStore'
 
 const router = useRouter()
+const ankiStore = useAnkiStore()
 
 // 连接状态
-const connectionStatus = reactive({
-  type: 'warning' as 'success' | 'warning' | 'danger',
-  text: '未连接'
+const connectionStatus = computed(() => {
+  if (ankiStore.isLoading) {
+    return {
+      type: 'info' as const,
+      text: '连接中...'
+    }
+  }
+  
+  if (ankiStore.isConnected) {
+    return {
+      type: 'success' as const,
+      text: '已连接'
+    }
+  }
+  
+  return {
+    type: 'danger' as const,
+    text: '未连接'
+  }
 })
 
 // 侧边栏展开状态
@@ -179,51 +199,29 @@ const tagTreeExpanded = ref(false)
 const currentModule = ref('')
 
 // 树形数据
-const deckTreeData = ref([
-  {
-    id: '1',
-    label: '默认牌组',
-    type: 'deck',
-    children: [
-      {
-        id: '1-1',
-        label: '子牌组1',
-        type: 'deck'
-      },
-      {
-        id: '1-2',
-        label: '子牌组2',
-        type: 'deck'
-      }
-    ]
-  }
-])
+const deckTreeData = computed(() => {
+  return ankiStore.decks.map(deck => ({
+    id: deck.name,
+    label: deck.name,
+    type: 'deck'
+  }))
+})
 
-const templateTreeData = ref([
-  {
-    id: '1',
-    label: '基础模板',
+const templateTreeData = computed(() => {
+  return ankiStore.models.map(model => ({
+    id: model.name,
+    label: model.name,
     type: 'template'
-  },
-  {
-    id: '2',
-    label: '填空题模板',
-    type: 'template'
-  }
-])
+  }))
+})
 
-const tagTreeData = ref([
-  {
-    id: '1',
-    label: '学习',
+const tagTreeData = computed(() => {
+  return ankiStore.tags.map(tag => ({
+    id: tag,
+    label: tag,
     type: 'tag'
-  },
-  {
-    id: '2',
-    label: '工作',
-    type: 'tag'
-  }
-])
+  }))
+})
 
 const treeProps = {
   children: 'children',
@@ -275,26 +273,31 @@ const openHelp = () => {
   ElMessage.info('帮助功能开发中...')
 }
 
-const refreshData = () => {
-  ElMessage.success('数据已刷新')
-}
-
-// 检查连接状态
-const checkConnection = async () => {
+const refreshData = async () => {
   try {
-    // 这里将来会调用 AnkiConnect API
-    // 暂时模拟连接检查
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    connectionStatus.type = 'success'
-    connectionStatus.text = '已连接'
+    await ankiStore.initialize()
+    ElMessage.success('数据已刷新')
   } catch (error) {
-    connectionStatus.type = 'danger'
-    connectionStatus.text = '连接失败'
+    ElMessage.error('刷新数据失败')
   }
 }
 
-onMounted(() => {
-  checkConnection()
+const testConnection = async () => {
+  try {
+    await ankiStore.testConnection()
+    if (ankiStore.isConnected) {
+      ElMessage.success('连接成功！')
+      await ankiStore.initialize()
+    } else {
+      ElMessage.error(ankiStore.connectionError || '连接失败')
+    }
+  } catch (error) {
+    ElMessage.error('连接测试失败')
+  }
+}
+
+onMounted(async () => {
+  await ankiStore.initialize()
 })
 </script>
 
@@ -336,6 +339,7 @@ onMounted(() => {
 
 .connection-status {
   margin-right: 10px;
+  cursor: pointer;
 }
 
 .main-content {

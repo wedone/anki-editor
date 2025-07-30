@@ -23,10 +23,29 @@
               <span style="margin-left: 10px;">毫秒</span>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="testConnection">测试连接</el-button>
+              <el-button type="primary" @click="testConnection" :loading="ankiStore.isLoading">
+                测试连接
+              </el-button>
               <el-button @click="saveConnectionSettings">保存设置</el-button>
             </el-form-item>
           </el-form>
+          
+          <!-- 连接状态显示 -->
+          <el-alert
+            v-if="ankiStore.connectionError"
+            :title="ankiStore.connectionError"
+            type="error"
+            show-icon
+            style="margin-top: 20px;"
+          />
+          
+          <el-alert
+            v-if="ankiStore.isConnected"
+            title="连接成功！AnkiConnect 已就绪"
+            type="success"
+            show-icon
+            style="margin-top: 20px;"
+          />
         </el-tab-pane>
 
         <!-- 界面设置 -->
@@ -72,16 +91,22 @@
           <el-form :model="cardSettings" label-width="120px">
             <el-form-item label="默认牌组">
               <el-select v-model="cardSettings.defaultDeck" placeholder="选择默认牌组">
-                <el-option label="默认牌组" value="默认牌组" />
-                <el-option label="JavaScript 学习" value="JavaScript 学习" />
-                <el-option label="Vue.js 基础" value="Vue.js 基础" />
+                <el-option 
+                  v-for="deck in ankiStore.decks" 
+                  :key="deck.name" 
+                  :label="deck.name" 
+                  :value="deck.name" 
+                />
               </el-select>
             </el-form-item>
             <el-form-item label="默认模板">
               <el-select v-model="cardSettings.defaultTemplate" placeholder="选择默认模板">
-                <el-option label="基础模板" value="基础模板" />
-                <el-option label="填空题模板" value="填空题模板" />
-                <el-option label="选择题模板" value="选择题模板" />
+                <el-option 
+                  v-for="model in ankiStore.models" 
+                  :key="model.name" 
+                  :label="model.name" 
+                  :value="model.name" 
+                />
               </el-select>
             </el-form-item>
             <el-form-item label="默认标签">
@@ -147,15 +172,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useAnkiStore } from '@/stores/ankiStore'
 
+const ankiStore = useAnkiStore()
 const activeTab = ref('connection')
 
 // 连接设置
 const connectionSettings = reactive({
   host: 'localhost',
-  port: '8765',
+  port: 8765,
   apiKey: '',
   timeout: 5000
 })
@@ -171,8 +198,8 @@ const interfaceSettings = reactive({
 
 // 卡片设置
 const cardSettings = reactive({
-  defaultDeck: '默认牌组',
-  defaultTemplate: '基础模板',
+  defaultDeck: '',
+  defaultTemplate: '',
   defaultTags: '',
   autoAddTags: true,
   showPreview: true
@@ -187,13 +214,34 @@ const importSettings = reactive({
 })
 
 const testConnection = async () => {
-  ElMessage.info('正在测试连接...')
-  // 这里将来会调用 AnkiConnect API 测试连接
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  ElMessage.success('连接测试成功！')
+  try {
+    // 更新连接设置
+    ankiStore.updateConnectionSettings({
+      host: connectionSettings.host,
+      port: connectionSettings.port,
+      apiKey: connectionSettings.apiKey,
+      timeout: connectionSettings.timeout
+    })
+    
+    await ankiStore.testConnection()
+    if (ankiStore.isConnected) {
+      ElMessage.success('连接测试成功！')
+      await ankiStore.initialize()
+    } else {
+      ElMessage.error(ankiStore.connectionError || '连接失败')
+    }
+  } catch (error) {
+    ElMessage.error('连接测试失败')
+  }
 }
 
 const saveConnectionSettings = () => {
+  ankiStore.updateConnectionSettings({
+    host: connectionSettings.host,
+    port: connectionSettings.port,
+    apiKey: connectionSettings.apiKey,
+    timeout: connectionSettings.timeout
+  })
   ElMessage.success('连接设置已保存')
 }
 
@@ -216,6 +264,11 @@ const openAnkiConnectDocs = () => {
 const openElementPlusDocs = () => {
   window.open('https://element-plus.org/zh-CN/component/overview.html', '_blank')
 }
+
+onMounted(() => {
+  // 初始化连接设置
+  Object.assign(connectionSettings, ankiStore.connectionSettings)
+})
 </script>
 
 <style scoped>
