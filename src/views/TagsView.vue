@@ -3,7 +3,17 @@
     <div class="page-header">
       <h2>标签管理</h2>
       <div class="header-actions">
-        <el-button type="primary" @click="createTag">
+        <el-input 
+          v-model="searchKeyword" 
+          placeholder="搜索标签" 
+          style="width: 200px; margin-right: 10px;"
+          clearable
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-button type="primary" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon>
           新建标签
         </el-button>
@@ -11,134 +21,228 @@
     </div>
 
     <div class="tags-content">
-      <el-table :data="tags" style="width: 100%">
-        <el-table-column prop="name" label="标签名称" />
-        <el-table-column prop="color" label="颜色" width="100">
-          <template #default="scope">
-            <el-tag :color="scope.row.color" effect="dark">{{ scope.row.name }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="cardCount" label="卡片数量" width="120" />
-        <el-table-column prop="createdTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="200">
-          <template #default="scope">
-            <el-button size="small" @click="editTag(scope.row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteTag(scope.row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <!-- 连接状态提示 -->
+      <el-alert
+        v-if="!ankiStore.isConnected"
+        title="未连接到 Anki"
+        description="请先在设置中配置 AnkiConnect 连接"
+        type="warning"
+        show-icon
+        style="margin-bottom: 20px;"
+      />
+
+      <!-- 加载状态 -->
+      <div v-if="ankiStore.isLoading" class="loading-container">
+        <el-skeleton :rows="5" animated />
+      </div>
+
+      <!-- 标签列表 -->
+      <div v-else-if="filteredTags.length > 0" class="tags-list">
+        <el-row :gutter="20">
+          <el-col 
+            v-for="tag in filteredTags" 
+            :key="tag" 
+            :span="6"
+            style="margin-bottom: 20px;"
+          >
+            <el-card class="tag-card" shadow="hover">
+              <div class="tag-content">
+                <div class="tag-header">
+                  <el-icon><PriceTag /></el-icon>
+                  <span class="tag-name">{{ tag }}</span>
+                </div>
+                <div class="tag-actions">
+                  <el-button size="small" @click="viewTag(tag)">
+                    <el-icon><View /></el-icon>
+                    查看
+                  </el-button>
+                  <el-button size="small" type="danger" @click="deleteTag(tag)">
+                    <el-icon><Delete /></el-icon>
+                    删除
+                  </el-button>
+                </div>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-else class="empty-state">
+        <el-empty :description="searchKeyword ? '未找到匹配的标签' : '暂无标签'">
+          <el-button type="primary" @click="showCreateDialog = true">
+            创建第一个标签
+          </el-button>
+        </el-empty>
+      </div>
     </div>
 
-    <!-- 新建标签对话框 -->
-    <el-dialog v-model="createDialogVisible" title="新建标签" width="500px">
-      <el-form :model="newTag" label-width="80px">
-        <el-form-item label="标签名称">
-          <el-input v-model="newTag.name" placeholder="请输入标签名称" />
+    <!-- 创建标签对话框 -->
+    <el-dialog
+      v-model="showCreateDialog"
+      title="新建标签"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="createForm" :rules="createRules" ref="createFormRef" label-width="100px">
+        <el-form-item label="标签名称" prop="name">
+          <el-input v-model="createForm.name" placeholder="请输入标签名称" />
         </el-form-item>
         <el-form-item label="标签颜色">
-          <el-color-picker v-model="newTag.color" />
+          <el-color-picker v-model="createForm.color" />
         </el-form-item>
         <el-form-item label="描述">
           <el-input 
-            v-model="newTag.description" 
+            v-model="createForm.description" 
             type="textarea" 
-            placeholder="请输入标签描述"
+            placeholder="可选，输入标签描述"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="createDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="confirmCreateTag">确定</el-button>
+          <el-button @click="showCreateDialog = false">取消</el-button>
+          <el-button type="primary" @click="handleCreateTag" :loading="creating">
+            创建
+          </el-button>
         </span>
       </template>
+    </el-dialog>
+
+    <!-- 查看标签对话框 -->
+    <el-dialog
+      v-model="showViewDialog"
+      title="标签详情"
+      width="600px"
+    >
+      <div v-if="viewingTag" class="tag-detail">
+        <div class="tag-info">
+          <h3>{{ viewingTag }}</h3>
+          <p>使用此标签的卡片数量：{{ tagUsageCount }}</p>
+        </div>
+        
+        <div class="tag-usage">
+          <h4>使用此标签的卡片</h4>
+          <div v-if="taggedCards.length > 0" class="cards-list">
+            <el-table :data="taggedCards" style="width: 100%">
+              <el-table-column prop="id" label="ID" width="80" />
+              <el-table-column prop="deckName" label="牌组" width="150">
+                <template #default="{ row }">
+                  <el-tag size="small">{{ row.deckName }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="内容" min-width="300">
+                <template #default="{ row }">
+                  <div class="card-content">
+                    <div v-for="(value, key) in row.fields" :key="key" class="field">
+                      <strong>{{ key }}:</strong> {{ value }}
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="lastModified" label="最后修改" width="180">
+                <template #default="{ row }">
+                  {{ formatDate(row.lastModified) }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <div v-else class="no-cards">
+            <el-empty description="暂无使用此标签的卡片" />
+          </div>
+        </div>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useAnkiStore } from '@/stores/ankiStore'
+import { ankiConnect } from '@/api/ankiConnect'
+import type { Note } from '@/api/ankiConnect'
 
-// 标签数据
-const tags = ref([
-  {
-    id: '1',
-    name: '学习',
-    color: '#409eff',
-    cardCount: 150,
-    createdTime: '2024-01-01 10:00:00',
-    description: '学习相关的卡片'
-  },
-  {
-    id: '2',
-    name: '工作',
-    color: '#67c23a',
-    cardCount: 89,
-    createdTime: '2024-01-10 09:00:00',
-    description: '工作相关的卡片'
-  },
-  {
-    id: '3',
-    name: 'javascript',
-    color: '#e6a23c',
-    cardCount: 67,
-    createdTime: '2024-01-12 11:00:00',
-    description: 'JavaScript 相关的卡片'
-  },
-  {
-    id: '4',
-    name: 'vue',
-    color: '#f56c6c',
-    cardCount: 45,
-    createdTime: '2024-01-15 14:30:00',
-    description: 'Vue.js 相关的卡片'
-  }
-])
+const ankiStore = useAnkiStore()
 
-// 新建标签对话框
-const createDialogVisible = ref(false)
-const newTag = reactive({
+// 状态
+const searchKeyword = ref('')
+const showCreateDialog = ref(false)
+const showViewDialog = ref(false)
+const creating = ref(false)
+
+// 表单引用
+const createFormRef = ref()
+
+// 查看的标签
+const viewingTag = ref('')
+const taggedCards = ref<Note[]>([])
+
+// 创建表单
+const createForm = reactive({
   name: '',
   color: '#409eff',
   description: ''
 })
 
-const createTag = () => {
-  createDialogVisible.value = true
-  newTag.name = ''
-  newTag.color = '#409eff'
-  newTag.description = ''
+// 表单验证规则
+const createRules = {
+  name: [
+    { required: true, message: '请输入标签名称', trigger: 'blur' },
+    { min: 1, max: 50, message: '标签名称长度在 1 到 50 个字符', trigger: 'blur' }
+  ]
 }
 
-const confirmCreateTag = () => {
-  if (!newTag.name.trim()) {
-    ElMessage.warning('请输入标签名称')
-    return
+// 过滤后的标签
+const filteredTags = computed(() => {
+  if (!searchKeyword.value) {
+    return ankiStore.tags
+  }
+  return ankiStore.tags.filter(tag => 
+    tag.toLowerCase().includes(searchKeyword.value.toLowerCase())
+  )
+})
+
+// 标签使用数量
+const tagUsageCount = computed(() => {
+  if (!viewingTag.value) return 0
+  return ankiStore.notes.filter(note => 
+    note.tags.includes(viewingTag.value)
+  ).length
+})
+
+// 格式化日期
+const formatDate = (timestamp: number) => {
+  return new Date(timestamp).toLocaleString('zh-CN')
+}
+
+// 查看标签
+const viewTag = async (tag: string) => {
+  viewingTag.value = tag
+  
+  // 加载使用此标签的卡片
+  try {
+    const query = `tag:${tag}`
+    const noteIds = await ankiConnect.findNotes(query)
+    
+    if (noteIds.length > 0) {
+      taggedCards.value = await ankiConnect.getNotesInfo(noteIds)
+    } else {
+      taggedCards.value = []
+    }
+  } catch (error) {
+    console.error('加载标签卡片失败:', error)
+    taggedCards.value = []
   }
   
-  // 这里将来会调用 AnkiConnect API
-  tags.value.push({
-    id: Date.now().toString(),
-    name: newTag.name,
-    color: newTag.color,
-    cardCount: 0,
-    createdTime: new Date().toLocaleString(),
-    description: newTag.description
-  })
-  
-  createDialogVisible.value = false
-  ElMessage.success('标签创建成功')
+  showViewDialog.value = true
 }
 
-const editTag = (tag: any) => {
-  ElMessage.info(`编辑标签: ${tag.name}`)
-}
-
-const deleteTag = async (tag: any) => {
+// 删除标签
+const deleteTag = async (tag: string) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除标签 "${tag.name}" 吗？`,
+      `确定要删除标签 "${tag}" 吗？此操作将从所有使用此标签的卡片中移除该标签。`,
       '确认删除',
       {
         confirmButtonText: '确定',
@@ -146,16 +250,54 @@ const deleteTag = async (tag: any) => {
         type: 'warning'
       }
     )
+
+    // 从所有使用此标签的卡片中移除该标签
+    const cardsWithTag = ankiStore.notes.filter(note => note.tags.includes(tag))
     
-    const index = tags.value.findIndex(t => t.id === tag.id)
-    if (index > -1) {
-      tags.value.splice(index, 1)
-      ElMessage.success('标签删除成功')
+    for (const card of cardsWithTag) {
+      const updatedTags = card.tags.filter(t => t !== tag)
+      await ankiStore.updateNote(card.id, card.fields, updatedTags)
     }
-  } catch {
-    // 用户取消删除
+    
+    ElMessage.success('标签删除成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除标签失败')
+    }
   }
 }
+
+// 创建标签
+const handleCreateTag = async () => {
+  if (!createFormRef.value) return
+
+  try {
+    await createFormRef.value.validate()
+    creating.value = true
+
+    // Anki 的标签是在创建卡片时自动生成的，这里显示提示
+    ElMessage.info('标签会在创建卡片时自动生成，请先创建使用该标签的卡片')
+    showCreateDialog.value = false
+    
+    // 重置表单
+    createForm.name = ''
+    createForm.color = '#409eff'
+    createForm.description = ''
+  } catch (error) {
+    if (error !== false) {
+      ElMessage.error('创建标签失败')
+    }
+  } finally {
+    creating.value = false
+  }
+}
+
+// 页面加载时刷新数据
+onMounted(async () => {
+  if (ankiStore.isConnected) {
+    await ankiStore.loadTags()
+  }
+})
 </script>
 
 <style scoped>
@@ -177,13 +319,96 @@ const deleteTag = async (tag: any) => {
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  align-items: center;
 }
 
 .tags-content {
   background: #fff;
   border-radius: 4px;
   padding: 20px;
+}
+
+.loading-container {
+  padding: 20px;
+}
+
+.tags-list {
+  margin-top: 20px;
+}
+
+.tag-card {
+  height: 120px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.tag-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tag-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.tag-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tag-name {
+  font-weight: bold;
+  color: #303133;
+  font-size: 16px;
+}
+
+.tag-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.tag-detail h3 {
+  margin: 0 0 10px 0;
+  color: #303133;
+}
+
+.tag-info p {
+  color: #606266;
+  margin: 0 0 20px 0;
+}
+
+.tag-usage h4 {
+  margin: 0 0 15px 0;
+  color: #303133;
+}
+
+.cards-list {
+  margin-top: 15px;
+}
+
+.card-content {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.field {
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.no-cards {
+  text-align: center;
+  padding: 40px 20px;
 }
 
 .dialog-footer {
