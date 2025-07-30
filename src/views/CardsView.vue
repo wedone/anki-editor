@@ -3,67 +3,197 @@
     <div class="page-header">
       <h2>卡片管理</h2>
       <div class="header-actions">
-        <el-button type="primary" @click="createCard">
+        <el-select v-model="selectedDeck" placeholder="选择牌组" style="width: 200px; margin-right: 10px;">
+          <el-option label="全部牌组" value="" />
+          <el-option 
+            v-for="deck in ankiStore.decks" 
+            :key="deck.name" 
+            :label="deck.name" 
+            :value="deck.name" 
+          />
+        </el-select>
+        <el-button type="primary" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon>
           新建卡片
-        </el-button>
-        <el-button @click="importCards">
-          <el-icon><Upload /></el-icon>
-          导入卡片
         </el-button>
       </div>
     </div>
 
     <div class="cards-content">
-      <el-table :data="cards" style="width: 100%">
-        <el-table-column prop="front" label="正面" />
-        <el-table-column prop="back" label="背面" />
-        <el-table-column prop="deck" label="所属牌组" width="120" />
-        <el-table-column prop="tags" label="标签" width="150" />
-        <el-table-column prop="createdTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="200">
-          <template #default="scope">
-            <el-button size="small" @click="editCard(scope.row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteCard(scope.row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <!-- 连接状态提示 -->
+      <el-alert
+        v-if="!ankiStore.isConnected"
+        title="未连接到 Anki"
+        description="请先在设置中配置 AnkiConnect 连接"
+        type="warning"
+        show-icon
+        style="margin-bottom: 20px;"
+      />
+
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-container">
+        <el-skeleton :rows="5" animated />
+      </div>
+
+      <!-- 卡片列表 -->
+      <div v-else-if="ankiStore.notes.length > 0" class="cards-list">
+        <el-table :data="ankiStore.notes" style="width: 100%">
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="deckName" label="牌组" width="150">
+            <template #default="{ row }">
+              <el-tag size="small">{{ row.deckName }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="modelName" label="模板" width="120">
+            <template #default="{ row }">
+              <el-tag size="small" type="info">{{ row.modelName }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="内容" min-width="300">
+            <template #default="{ row }">
+              <div class="card-content">
+                <div v-for="(value, key) in row.fields" :key="key" class="field">
+                  <strong>{{ key }}:</strong> {{ value }}
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="tags" label="标签" width="150">
+            <template #default="{ row }">
+              <div class="tags-container">
+                <el-tag 
+                  v-for="tag in row.tags" 
+                  :key="tag" 
+                  size="small" 
+                  style="margin-right: 4px;"
+                >
+                  {{ tag }}
+                </el-tag>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="lastModified" label="最后修改" width="180">
+            <template #default="{ row }">
+              {{ formatDate(row.lastModified) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="150" fixed="right">
+            <template #default="{ row }">
+              <el-button size="small" @click="editCard(row)">
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
+              <el-button size="small" type="danger" @click="deleteCard(row)">
+                <el-icon><Delete /></el-icon>
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-else class="empty-state">
+        <el-empty description="暂无卡片">
+          <el-button type="primary" @click="showCreateDialog = true">
+            创建第一张卡片
+          </el-button>
+        </el-empty>
+      </div>
     </div>
 
-    <!-- 新建卡片对话框 -->
-    <el-dialog v-model="createDialogVisible" title="新建卡片" width="600px">
-      <el-form :model="newCard" label-width="80px">
-        <el-form-item label="正面">
-          <el-input 
-            v-model="newCard.front" 
-            type="textarea" 
-            :rows="3"
-            placeholder="请输入卡片正面内容"
-          />
-        </el-form-item>
-        <el-form-item label="背面">
-          <el-input 
-            v-model="newCard.back" 
-            type="textarea" 
-            :rows="3"
-            placeholder="请输入卡片背面内容"
-          />
-        </el-form-item>
-        <el-form-item label="牌组">
-          <el-select v-model="newCard.deck" placeholder="选择牌组">
-            <el-option label="默认牌组" value="默认牌组" />
-            <el-option label="JavaScript 学习" value="JavaScript 学习" />
-            <el-option label="Vue.js 基础" value="Vue.js 基础" />
+    <!-- 创建卡片对话框 -->
+    <el-dialog
+      v-model="showCreateDialog"
+      title="新建卡片"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="createForm" :rules="createRules" ref="createFormRef" label-width="100px">
+        <el-form-item label="牌组" prop="deckName">
+          <el-select v-model="createForm.deckName" placeholder="选择牌组">
+            <el-option 
+              v-for="deck in ankiStore.decks" 
+              :key="deck.name" 
+              :label="deck.name" 
+              :value="deck.name" 
+            />
           </el-select>
         </el-form-item>
+        <el-form-item label="模板" prop="modelName">
+          <el-select v-model="createForm.modelName" placeholder="选择模板">
+            <el-option 
+              v-for="model in ankiStore.models" 
+              :key="model.name" 
+              :label="model.name" 
+              :value="model.name" 
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="字段">
+          <div v-for="field in selectedModelFields" :key="field" class="field-input">
+            <label>{{ field }}:</label>
+            <el-input v-model="createForm.fields[field]" :placeholder="`输入${field}`" />
+          </div>
+        </el-form-item>
         <el-form-item label="标签">
-          <el-input v-model="newCard.tags" placeholder="请输入标签，用逗号分隔" />
+          <el-input v-model="createForm.tags" placeholder="输入标签，用逗号分隔" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="createDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="confirmCreateCard">确定</el-button>
+          <el-button @click="showCreateDialog = false">取消</el-button>
+          <el-button type="primary" @click="handleCreateCard" :loading="creating">
+            创建
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 编辑卡片对话框 -->
+    <el-dialog
+      v-model="showEditDialog"
+      title="编辑卡片"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="editForm" :rules="editRules" ref="editFormRef" label-width="100px">
+        <el-form-item label="牌组" prop="deckName">
+          <el-select v-model="editForm.deckName" placeholder="选择牌组">
+            <el-option 
+              v-for="deck in ankiStore.decks" 
+              :key="deck.name" 
+              :label="deck.name" 
+              :value="deck.name" 
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="模板" prop="modelName">
+          <el-select v-model="editForm.modelName" placeholder="选择模板">
+            <el-option 
+              v-for="model in ankiStore.models" 
+              :key="model.name" 
+              :label="model.name" 
+              :value="model.name" 
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="字段">
+          <div v-for="field in selectedEditModelFields" :key="field" class="field-input">
+            <label>{{ field }}:</label>
+            <el-input v-model="editForm.fields[field]" :placeholder="`输入${field}`" />
+          </div>
+        </el-form-item>
+        <el-form-item label="标签">
+          <el-input v-model="editForm.tags" placeholder="输入标签，用逗号分隔" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showEditDialog = false">取消</el-button>
+          <el-button type="primary" @click="handleEditCard" :loading="editing">
+            保存
+          </el-button>
         </span>
       </template>
     </el-dialog>
@@ -71,87 +201,111 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useAnkiStore } from '@/stores/ankiStore'
+import type { Note, Model } from '@/api/ankiConnect'
 
-// 卡片数据
-const cards = ref([
-  {
-    id: '1',
-    front: '什么是 Vue.js？',
-    back: 'Vue.js 是一个渐进式 JavaScript 框架，用于构建用户界面。',
-    deck: 'Vue.js 基础',
-    tags: 'vue,前端',
-    createdTime: '2024-01-15 14:30:00'
-  },
-  {
-    id: '2',
-    front: 'JavaScript 中的 let 和 var 有什么区别？',
-    back: 'let 是块级作用域，var 是函数作用域。let 不会变量提升，var 会。',
-    deck: 'JavaScript 学习',
-    tags: 'javascript,变量',
-    createdTime: '2024-01-15 13:45:00'
-  },
-  {
-    id: '3',
-    front: '什么是 Anki？',
-    back: 'Anki 是一个基于间隔重复算法的记忆软件，帮助用户高效学习。',
-    deck: '默认牌组',
-    tags: 'anki,学习',
-    createdTime: '2024-01-15 12:20:00'
-  }
-])
+const ankiStore = useAnkiStore()
 
-// 新建卡片对话框
-const createDialogVisible = ref(false)
-const newCard = reactive({
-  front: '',
-  back: '',
-  deck: '',
+// 状态
+const loading = ref(false)
+const selectedDeck = ref('')
+const showCreateDialog = ref(false)
+const showEditDialog = ref(false)
+const creating = ref(false)
+const editing = ref(false)
+
+// 表单引用
+const createFormRef = ref()
+const editFormRef = ref()
+
+// 创建表单
+const createForm = reactive({
+  deckName: '',
+  modelName: '',
+  fields: {} as Record<string, string>,
   tags: ''
 })
 
-const createCard = () => {
-  createDialogVisible.value = true
-  newCard.front = ''
-  newCard.back = ''
-  newCard.deck = ''
-  newCard.tags = ''
+// 编辑表单
+const editForm = reactive({
+  id: 0,
+  deckName: '',
+  modelName: '',
+  fields: {} as Record<string, string>,
+  tags: ''
+})
+
+// 表单验证规则
+const createRules = {
+  deckName: [
+    { required: true, message: '请选择牌组', trigger: 'change' }
+  ],
+  modelName: [
+    { required: true, message: '请选择模板', trigger: 'change' }
+  ]
 }
 
-const confirmCreateCard = () => {
-  if (!newCard.front.trim() || !newCard.back.trim()) {
-    ElMessage.warning('请输入卡片正面和背面内容')
-    return
+const editRules = {
+  deckName: [
+    { required: true, message: '请选择牌组', trigger: 'change' }
+  ],
+  modelName: [
+    { required: true, message: '请选择模板', trigger: 'change' }
+  ]
+}
+
+// 计算属性
+const selectedModelFields = computed(() => {
+  const model = ankiStore.models.find(m => m.name === createForm.modelName)
+  return model?.fields || []
+})
+
+const selectedEditModelFields = computed(() => {
+  const model = ankiStore.models.find(m => m.name === editForm.modelName)
+  return model?.fields || []
+})
+
+// 格式化日期
+const formatDate = (timestamp: number) => {
+  return new Date(timestamp).toLocaleString('zh-CN')
+}
+
+// 加载卡片数据
+const loadCards = async () => {
+  if (!ankiStore.isConnected) return
+  
+  loading.value = true
+  try {
+    await ankiStore.loadNotes(selectedDeck.value || undefined)
+  } catch (error) {
+    ElMessage.error('加载卡片失败')
+  } finally {
+    loading.value = false
   }
-  
-  if (!newCard.deck) {
-    ElMessage.warning('请选择牌组')
-    return
-  }
-  
-  // 这里将来会调用 AnkiConnect API
-  cards.value.push({
-    id: Date.now().toString(),
-    front: newCard.front,
-    back: newCard.back,
-    deck: newCard.deck,
-    tags: newCard.tags,
-    createdTime: new Date().toLocaleString()
-  })
-  
-  createDialogVisible.value = false
-  ElMessage.success('卡片创建成功')
 }
 
-const editCard = (card: any) => {
-  ElMessage.info(`编辑卡片: ${card.front}`)
+// 监听牌组选择变化
+watch(selectedDeck, () => {
+  loadCards()
+})
+
+// 编辑卡片
+const editCard = (card: Note) => {
+  editForm.id = card.id
+  editForm.deckName = card.deckName
+  editForm.modelName = card.modelName
+  editForm.fields = { ...card.fields }
+  editForm.tags = card.tags.join(', ')
+  showEditDialog.value = true
 }
 
-const deleteCard = async (card: any) => {
+// 删除卡片
+const deleteCard = async (card: Note) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除这张卡片吗？`,
+      `确定要删除这张卡片吗？此操作不可恢复。`,
       '确认删除',
       {
         confirmButtonText: '确定',
@@ -159,20 +313,79 @@ const deleteCard = async (card: any) => {
         type: 'warning'
       }
     )
-    
-    const index = cards.value.findIndex(c => c.id === card.id)
-    if (index > -1) {
-      cards.value.splice(index, 1)
-      ElMessage.success('卡片删除成功')
+
+    await ankiStore.deleteNotes([card.id])
+    ElMessage.success('卡片删除成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除卡片失败')
     }
-  } catch {
-    // 用户取消删除
   }
 }
 
-const importCards = () => {
-  ElMessage.info('导入卡片功能开发中...')
+// 创建卡片
+const handleCreateCard = async () => {
+  if (!createFormRef.value) return
+
+  try {
+    await createFormRef.value.validate()
+    creating.value = true
+
+    const tags = createForm.tags ? createForm.tags.split(',').map(t => t.trim()) : []
+    
+    await ankiStore.addNote(
+      createForm.deckName,
+      createForm.modelName,
+      createForm.fields,
+      tags
+    )
+    
+    ElMessage.success('卡片创建成功')
+    showCreateDialog.value = false
+    
+    // 重置表单
+    createForm.deckName = ''
+    createForm.modelName = ''
+    createForm.fields = {}
+    createForm.tags = ''
+  } catch (error) {
+    if (error !== false) {
+      ElMessage.error('创建卡片失败')
+    }
+  } finally {
+    creating.value = false
+  }
 }
+
+// 编辑卡片
+const handleEditCard = async () => {
+  if (!editFormRef.value) return
+
+  try {
+    await editFormRef.value.validate()
+    editing.value = true
+
+    const tags = editForm.tags ? editForm.tags.split(',').map(t => t.trim()) : []
+    
+    await ankiStore.updateNote(editForm.id, editForm.fields, tags)
+    
+    ElMessage.success('卡片更新成功')
+    showEditDialog.value = false
+  } catch (error) {
+    if (error !== false) {
+      ElMessage.error('更新卡片失败')
+    }
+  } finally {
+    editing.value = false
+  }
+}
+
+// 页面加载时初始化
+onMounted(async () => {
+  if (ankiStore.isConnected) {
+    await loadCards()
+  }
+})
 </script>
 
 <style scoped>
@@ -194,13 +407,52 @@ const importCards = () => {
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  align-items: center;
 }
 
 .cards-content {
   background: #fff;
   border-radius: 4px;
   padding: 20px;
+}
+
+.loading-container {
+  padding: 20px;
+}
+
+.cards-list {
+  margin-top: 20px;
+}
+
+.card-content {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.field {
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.field-input {
+  margin-bottom: 10px;
+}
+
+.field-input label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
 }
 
 .dialog-footer {
