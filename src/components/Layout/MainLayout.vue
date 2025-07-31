@@ -50,6 +50,9 @@
                 <div class="collapse-title">
                   <el-icon><Folder /></el-icon>
                   <span>牌组管理</span>
+                  <el-tag size="small" type="info" class="deck-count">
+                    {{ ankiStore.decks.length }}
+                  </el-tag>
                 </div>
               </template>
               <div class="tree-container">
@@ -58,12 +61,14 @@
                   :props="treeProps"
                   node-key="id"
                   :expand-on-click-node="false"
+                  accordion
                   @node-click="handleDeckClick"
                 >
                   <template #default="{ node, data }">
-                    <span class="tree-node">
-                      <el-icon v-if="data.type === 'deck'"><Folder /></el-icon>
-                      <el-icon v-else><Document /></el-icon>
+                    <span class="tree-node" :class="{ 'leaf-node': data.isLeaf }">
+                      <el-icon v-if="data.type === 'folder'"><Folder /></el-icon>
+                      <el-icon v-else-if="data.type === 'deck'"><Document /></el-icon>
+                      <el-icon v-else><Folder /></el-icon>
                       {{ node.label }}
                     </span>
                   </template>
@@ -254,11 +259,49 @@ const debounce = (func: Function, wait: number) => {
 
 // 树形数据 - 使用computed优化性能
 const deckTreeData = computed(() => {
-  return ankiStore.decks.map(deck => ({
-    id: deck.name,
-    name: deck.name,
-    type: 'deck'
-  }))
+  const deckMap = new Map<string, any>()
+  const rootNodes: any[] = []
+  
+  // 处理所有牌组，构建树形结构
+  ankiStore.decks.forEach(deck => {
+    const deckName = deck.name
+    const parts = deckName.split('::').filter(part => part.trim() !== '')
+    
+    if (parts.length === 0) return
+    
+    let currentPath = ''
+    let parentNode: any = null
+    
+    parts.forEach((part, index) => {
+      const isLeaf = index === parts.length - 1
+      const fullPath = currentPath ? `${currentPath}::${part}` : part
+      
+      // 检查节点是否已存在
+      if (!deckMap.has(fullPath)) {
+        const node = {
+          id: fullPath,
+          name: part.trim(),
+          type: isLeaf ? 'deck' : 'folder',
+          children: [],
+          fullName: fullPath,
+          isLeaf: isLeaf
+        }
+        deckMap.set(fullPath, node)
+        
+        // 添加到父节点或根节点
+        if (parentNode) {
+          parentNode.children.push(node)
+        } else {
+          rootNodes.push(node)
+        }
+      }
+      
+      parentNode = deckMap.get(fullPath)
+      currentPath = fullPath
+    })
+  })
+  
+  return rootNodes
 })
 
 const templateTreeData = computed(() => {
@@ -283,11 +326,31 @@ const treeProps = {
   label: 'name'
 }
 
+// 默认展开的节点
+const expandedKeys = computed(() => {
+  const keys: string[] = []
+  const traverse = (nodes: any[]) => {
+    nodes.forEach(node => {
+      if (node.children && node.children.length > 0) {
+        keys.push(node.id)
+        traverse(node.children)
+      }
+    })
+  }
+  traverse(deckTreeData.value)
+  return keys
+})
+
 // 优化点击处理 - 添加防抖
 const handleDeckClick = debounce((data: any) => {
   console.log('点击牌组:', data)
-  currentModule.value = '牌组管理'
-  router.push('/decks')
+  
+  // 只有叶子节点（实际牌组）才能点击
+  if (data.isLeaf) {
+    currentModule.value = '牌组管理'
+    ElMessage.info(`选择了牌组: ${data.fullName}`)
+    router.push('/decks')
+  }
 }, 100)
 
 const handleTemplateClick = debounce((data: any) => {
@@ -429,6 +492,11 @@ onMounted(async () => {
   font-size: 16px;
 }
 
+.deck-count {
+  margin-left: auto;
+  font-size: 12px;
+}
+
 .menu-items {
   display: flex;
   flex-direction: column;
@@ -478,10 +546,23 @@ onMounted(async () => {
   font-size: 14px;
   color: #606266;
   transition: all 0.2s ease;
+  padding: 2px 0;
 }
 
 .tree-node:hover {
   color: #409eff;
+}
+
+.tree-node.leaf-node {
+  font-weight: 500;
+  color: #303133;
+}
+
+.tree-node.leaf-node:hover {
+  color: #409eff;
+  background-color: #ecf5ff;
+  border-radius: 4px;
+  padding: 2px 4px;
 }
 
 .tree-node .el-icon {
