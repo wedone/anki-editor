@@ -85,7 +85,7 @@
         >
           搜索: {{ searchQuery }}
         </el-tag>
-        <el-button type="text" @click="clearFilters" size="small">
+        <el-button type="link" @click="clearFilters" size="small">
           清除所有筛选
         </el-button>
       </div>
@@ -137,14 +137,14 @@
         </el-table-column>
         <el-table-column label="操作" width="150" align="center">
           <template #default="{ row }">
-            <el-button type="text" size="small" @click="editCard(row)">
+            <el-button type="link" size="small" @click="editCard(row)">
               编辑
             </el-button>
-            <el-button type="text" size="small" @click="previewCard(row)">
+            <el-button type="link" size="small" @click="previewCard(row)">
               预览
             </el-button>
             <el-button 
-              type="text" 
+              type="link" 
               size="small" 
               @click="deleteCard(row)" 
               style="color: #f56c6c;"

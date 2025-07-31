@@ -5,10 +5,19 @@
  */
 
 class AnkiConnectAPI {
-  constructor() {
-    this.baseUrl = 'http://127.0.0.1:8765'
+  constructor(host = 'localhost', port = 8765, apiKey = null, timeout = 30000) {
+    this.baseUrl = `http://${host}:${port}`
+    this.apiKey = apiKey
+    this.timeout = timeout
     this.version = 6
-    this.timeout = 10000 // 10秒超时
+    
+    // 批处理配置
+    this.config = {
+      cardBatchSize: 5, // 卡片批处理大小
+      statsBatchSize: 3, // 统计批处理大小
+      batchDelay: 100, // 批次间延迟（毫秒）
+      statsDelay: 200 // 统计批次间延迟（毫秒）
+    }
   }
 
   /**
@@ -22,6 +31,11 @@ class AnkiConnectAPI {
       action: action,
       version: this.version,
       params: params
+    }
+
+    // 如果设置了 API Key，添加到请求中
+    if (this.apiKey) {
+      request.key = this.apiKey
     }
 
     try {
@@ -40,16 +54,37 @@ class AnkiConnectAPI {
 
       const data = await response.json()
       
-      if (data.error) {
+      // 检查响应格式
+      if (Object.getOwnPropertyNames(data).length !== 2) {
+        throw new Error('response has an unexpected number of fields')
+      }
+      
+      if (!data.hasOwnProperty('error')) {
+        throw new Error('response is missing required error field')
+      }
+      
+      if (!data.hasOwnProperty('result')) {
+        throw new Error('response is missing required result field')
+      }
+      
+      if (data.error !== null) {
         throw new Error(data.error)
       }
 
       return data.result
     } catch (error) {
       if (error.name === 'AbortError') {
-        throw new Error('请求超时，请检查 Anki 是否正在运行且 AnkiConnect 插件已启用')
+        throw new Error(`请求超时 (${this.timeout}ms)，请检查：
+1. Anki 桌面应用是否正在运行
+2. AnkiConnect 插件是否已安装并启用
+3. 防火墙是否阻止了连接
+4. 端口 8765 是否被其他程序占用`)
       } else if (error.message.includes('Failed to fetch')) {
-        throw new Error('无法连接到 Anki，请确保 Anki 正在运行且 AnkiConnect 插件已安装')
+        throw new Error(`无法连接到 Anki (${this.baseUrl})，请确保：
+1. Anki 桌面应用正在运行
+2. AnkiConnect 插件已安装 (插件代码: 2055492159)
+3. 网络连接正常
+4. 没有防火墙阻止连接`)
       } else {
         throw new Error(`AnkiConnect 请求失败: ${error.message}`)
       }
@@ -62,8 +97,8 @@ class AnkiConnectAPI {
    */
   async testConnection() {
     try {
-      const result = await this.sendRequest('version')
-      return result >= 6
+      const response = await this.sendRequest('version')
+      return response >= 6
     } catch (error) {
       console.error('连接测试失败:', error.message)
       return false
@@ -79,12 +114,18 @@ class AnkiConnectAPI {
   }
 
   /**
-   * 获取牌组配置
+   * 获取牌组统计信息
    * @param {string} deckName - 牌组名称
-   * @returns {Promise<object>} 牌组配置
+   * @returns {Promise<object>} 牌组统计信息
    */
-  async getDeckConfig(deckName) {
-    return await this.sendRequest('getDeckConfig', { deck: deckName })
+  async getDeckStats(deckName) {
+    try {
+      const response = await this.sendRequest('getDeckStats', { deck: deckName })
+      return response
+    } catch (error) {
+      console.error(`获取牌组 ${deckName} 统计信息失败:`, error)
+      return null
+    }
   }
 
   /**
@@ -106,16 +147,6 @@ class AnkiConnectAPI {
       decks: [deckName],
       cardsToo: true 
     })
-  }
-
-  /**
-   * 获取牌组中的卡片数量
-   * @param {string} deckName - 牌组名称
-   * @returns {Promise<number>} 卡片数量
-   */
-  async getCardCount(deckName) {
-    return await this.sendRequest('getDeckConfig', { deck: deckName })
-      .then(config => config.new?.perDay || 0)
   }
 
   /**
@@ -247,85 +278,58 @@ class AnkiConnectAPI {
 
   /**
    * 获取集合统计信息
-   * @param {boolean} wholeCollection - 是否包含整个集合
-   * @returns {Promise<string>} HTML格式的统计信息
+   * @returns {Promise<object>} 集合统计信息
    */
-  async getCollectionStatsHTML(wholeCollection = true) {
-    return await this.sendRequest('getCollectionStatsHTML', { wholeCollection })
+  async getCollectionStats() {
+    return await this.sendRequest('getCollectionStats')
   }
 
   /**
-   * 获取牌组统计信息
-   * @param {string} deckName - 牌组名称
-   * @returns {Promise<object>} 牌组统计信息
-   */
-  async getDeckStats(deckName) {
-    try {
-      // 获取牌组中的卡片
-      const query = `deck:"${deckName}"`
-      const noteIds = await this.findNotes(query)
-      
-      if (noteIds.length === 0) {
-        return {
-          total: 0,
-          new: 0,
-          learning: 0,
-          review: 0,
-          suspended: 0
-        }
-      }
-
-      // 获取卡片信息
-      const notes = await this.notesInfo(noteIds)
-      const cardIds = notes.flatMap(note => note.cards)
-      const cards = await this.cardsInfo(cardIds)
-
-      // 统计卡片状态
-      const stats = {
-        total: cards.length,
-        new: 0,
-        learning: 0,
-        review: 0,
-        suspended: 0
-      }
-
-      cards.forEach(card => {
-        if (card.suspended) {
-          stats.suspended++
-        } else if (card.queue === 0) {
-          stats.new++
-        } else if (card.queue === 1 || card.queue === 3) {
-          stats.learning++
-        } else if (card.queue === 2) {
-          stats.review++
-        }
-      })
-
-      return stats
-    } catch (error) {
-      console.error(`获取牌组 ${deckName} 统计信息失败:`, error)
-      return null
-    }
-  }
-
-  /**
-   * 获取所有牌组的统计信息
+   * 获取所有牌组的统计信息（分批加载）
    * @returns {Promise<object>} 所有牌组统计信息
    */
   async getAllDeckStats() {
-    const deckNames = await this.getDeckNames()
-    const stats = {}
-    
-    for (const deckName of deckNames) {
-      try {
-        stats[deckName] = await this.getDeckStats(deckName)
-      } catch (error) {
-        console.error(`获取牌组 ${deckName} 统计信息失败:`, error)
-        stats[deckName] = null
+    try {
+      const deckNames = await this.getDeckNames()
+      const stats = {}
+      
+      // 分批处理牌组统计
+      const batchSize = this.config.statsBatchSize
+      for (let i = 0; i < deckNames.length; i += batchSize) {
+        const batch = deckNames.slice(i, i + batchSize)
+        console.log(`正在加载统计信息批次 ${Math.floor(i/batchSize) + 1}/${Math.ceil(deckNames.length/batchSize)}`)
+        
+        // 并行处理当前批次的牌组统计
+        const batchPromises = batch.map(async (deckName) => {
+          try {
+            const deckStat = await this.getDeckStats(deckName)
+            console.log(`牌组 "${deckName}" 统计信息加载完成`)
+            return { deckName, stats: deckStat }
+          } catch (error) {
+            console.error(`获取牌组 ${deckName} 统计信息失败:`, error)
+            return { deckName, stats: null }
+          }
+        })
+        
+        const batchResults = await Promise.allSettled(batchPromises)
+        batchResults.forEach(result => {
+          if (result.status === 'fulfilled') {
+            stats[result.value.deckName] = result.value.stats
+          }
+        })
+        
+        // 添加小延迟
+        if (i + batchSize < deckNames.length) {
+          await new Promise(resolve => setTimeout(resolve, this.config.statsDelay))
+        }
       }
+      
+      console.log(`总共加载了 ${Object.keys(stats).length} 个牌组的统计信息`)
+      return stats
+    } catch (error) {
+      console.error('获取所有牌组统计信息失败:', error)
+      return {}
     }
-    
-    return stats
   }
 
   /**
@@ -381,23 +385,51 @@ class AnkiConnectAPI {
   }
 
   /**
-   * 获取所有卡片信息
+   * 获取所有卡片信息（分批加载）
    * @returns {Promise<Array>} 所有卡片信息
    */
   async getAllCards() {
-    const deckNames = await this.getDeckNames()
-    const allCards = []
-    
-    for (const deckName of deckNames) {
-      try {
-        const deckCards = await this.getDeckCards(deckName)
-        allCards.push(...deckCards)
-      } catch (error) {
-        console.error(`获取牌组 ${deckName} 卡片失败:`, error)
+    try {
+      const deckNames = await this.getDeckNames()
+      const allCards = []
+      
+      // 分批处理牌组，避免一次性加载过多数据
+      const batchSize = this.config.cardBatchSize
+      for (let i = 0; i < deckNames.length; i += batchSize) {
+        const batch = deckNames.slice(i, i + batchSize)
+        console.log(`正在加载牌组批次 ${Math.floor(i/batchSize) + 1}/${Math.ceil(deckNames.length/batchSize)}`)
+        
+        // 并行处理当前批次的牌组
+        const batchPromises = batch.map(async (deckName) => {
+          try {
+            const deckCards = await this.getDeckCards(deckName)
+            console.log(`牌组 "${deckName}" 加载了 ${deckCards.length} 张卡片`)
+            return deckCards
+          } catch (error) {
+            console.error(`获取牌组 ${deckName} 卡片失败:`, error)
+            return [] // 返回空数组，继续处理其他牌组
+          }
+        })
+        
+        const batchResults = await Promise.allSettled(batchPromises)
+        batchResults.forEach(result => {
+          if (result.status === 'fulfilled') {
+            allCards.push(...result.value)
+          }
+        })
+        
+        // 添加小延迟，避免过于频繁的请求
+        if (i + batchSize < deckNames.length) {
+          await new Promise(resolve => setTimeout(resolve, this.config.batchDelay))
+        }
       }
+      
+      console.log(`总共加载了 ${allCards.length} 张卡片`)
+      return allCards
+    } catch (error) {
+      console.error('获取所有卡片失败:', error)
+      return []
     }
-    
-    return allCards
   }
 
   /**
@@ -560,9 +592,26 @@ class AnkiConnectAPI {
   async getDatabasePath() {
     return await this.sendRequest('getDatabasePath')
   }
+
+  /**
+   * 更新配置
+   * @param {object} newConfig - 新配置
+   */
+  updateConfig(newConfig) {
+    this.config = { ...this.config, ...newConfig }
+    console.log('AnkiConnect 配置已更新:', this.config)
+  }
+
+  /**
+   * 获取当前配置
+   * @returns {object} 当前配置
+   */
+  getConfig() {
+    return { ...this.config }
+  }
 }
 
-// 创建单例实例
+// 创建默认实例
 const ankiConnect = new AnkiConnectAPI()
 
 export default ankiConnect 

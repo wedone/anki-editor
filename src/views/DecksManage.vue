@@ -43,7 +43,7 @@
       >
         <el-table-column prop="name" label="牌组名称" min-width="200">
           <template #default="{ row }">
-            <el-button type="text" @click="viewDeck(row)">
+            <el-button type="link" @click="viewDeck(row)">
               {{ row.name }}
             </el-button>
           </template>
@@ -60,14 +60,14 @@
         </el-table-column>
         <el-table-column label="操作" width="200" align="center">
           <template #default="{ row }">
-            <el-button type="text" size="small" @click="editDeck(row)">
+            <el-button type="link" size="small" @click="editDeck(row)">
               编辑
             </el-button>
-            <el-button type="text" size="small" @click="browseCards(row)">
+            <el-button type="link" size="small" @click="browseCards(row)">
               浏览卡片
             </el-button>
             <el-button 
-              type="text" 
+              type="link" 
               size="small" 
               @click="deleteDeck(row)" 
               style="color: #f56c6c;"

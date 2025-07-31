@@ -202,7 +202,7 @@
           <template #header>
             <div class="progress-header">
               <span>{{ progressTitle }}</span>
-              <el-button type="text" @click="cancelOperation">
+              <el-button type="link" @click="cancelOperation">
                 取消
               </el-button>
             </div>
@@ -227,7 +227,7 @@
           <template #header>
             <div class="history-header">
               <span>操作历史</span>
-              <el-button type="text" @click="refreshHistory">
+              <el-button type="link" @click="refreshHistory">
                 刷新
               </el-button>
             </div>
@@ -260,10 +260,10 @@
             </el-table-column>
             <el-table-column label="操作" width="150" align="center">
               <template #default="{ row }">
-                <el-button type="text" size="small" @click="downloadFile(row)">
+                <el-button type="link" size="small" @click="downloadFile(row)">
                   下载
                 </el-button>
-                <el-button type="text" size="small" @click="deleteHistory(row)">
+                <el-button type="link" size="small" @click="deleteHistory(row)">
                   删除
                 </el-button>
               </template>

@@ -134,16 +134,16 @@
         </el-table-column>
         <el-table-column label="操作" width="200" align="center">
           <template #default="{ row }">
-            <el-button type="text" size="small" @click="editTag(row)">
+            <el-button type="link" size="small" @click="editTag(row)">
               编辑
             </el-button>
-            <el-button type="text" size="small" @click="viewTagDetails(row)">
+            <el-button type="link" size="small" @click="viewTagDetails(row)">
               详情
             </el-button>
-            <el-button 
-              type="text" 
-              size="small" 
-              @click="deleteTag(row)" 
+            <el-button
+              type="link"
+              size="small"
+              @click="deleteTag(row)"
               style="color: #f56c6c;"
               :disabled="!ankiStore.isConnected"
             >

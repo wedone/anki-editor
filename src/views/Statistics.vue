@@ -166,7 +166,7 @@
               </el-table-column>
               <el-table-column label="操作" width="120" align="center">
                 <template #default="{ row }">
-                  <el-button type="text" size="small" @click="viewDeckDetails(row)">
+                  <el-button type="link" size="small" @click="viewDeckDetails(row)">
                     详情
                   </el-button>
                 </template>

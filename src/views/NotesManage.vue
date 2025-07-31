@@ -33,7 +33,7 @@
       >
         <el-table-column prop="name" label="模板名称" min-width="150">
           <template #default="{ row }">
-            <el-button type="text" @click="viewModel(row)">
+            <el-button type="link" @click="viewModel(row)">
               {{ row.name }}
             </el-button>
           </template>
@@ -55,17 +55,17 @@
         </el-table-column>
         <el-table-column label="操作" width="250" align="center">
           <template #default="{ row }">
-            <el-button type="text" size="small" @click="editModel(row)">
+            <el-button type="link" size="small" @click="editModel(row)">
               编辑
             </el-button>
-            <el-button type="text" size="small" @click="previewModel(row)">
+            <el-button type="link" size="small" @click="previewModel(row)">
               预览
             </el-button>
-            <el-button type="text" size="small" @click="manageFields(row)">
+            <el-button type="link" size="small" @click="manageFields(row)">
               字段管理
             </el-button>
             <el-button 
-              type="text" 
+              type="link" 
               size="small" 
               @click="deleteModel(row)" 
               style="color: #f56c6c;"
