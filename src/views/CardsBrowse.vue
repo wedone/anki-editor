@@ -221,33 +221,17 @@ const totalCards = ref(0)
 const previewDialogVisible = ref(false)
 const previewCardData = ref({})
 
-// 模拟卡片数据
-const cards = ref([
-  {
-    id: 1,
-    deck: '默认牌组',
-    model: 'Basic',
-    front: '什么是 Vue.js？',
-    back: 'Vue.js 是一个渐进式 JavaScript 框架，用于构建用户界面。',
-    tags: ['vue', 'javascript', '前端']
-  },
-  {
-    id: 2,
-    deck: '英语词汇',
-    model: 'Basic',
-    front: 'apple',
-    back: '苹果',
-    tags: ['英语', '水果']
-  },
-  {
-    id: 3,
-    deck: '数学公式',
-    model: 'Basic',
-    front: '勾股定理',
-    back: 'a² + b² = c²',
-    tags: ['数学', '几何']
-  }
-])
+// 使用真实数据
+const cards = computed(() => {
+  return ankiStore.cards.map(card => ({
+    id: card.id,
+    deck: card.deck,
+    model: card.model,
+    front: card.fields?.Front || '无内容',
+    back: card.fields?.Back || '无内容',
+    tags: card.tags || []
+  }))
+})
 
 // 计算属性
 const hasActiveFilters = computed(() => {
@@ -280,8 +264,8 @@ const filteredCards = computed(() => {
 const applyFilters = async () => {
   loading.value = true
   try {
-    // 这里后续会集成真实的 AnkiConnect API 调用
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // 重新加载卡片数据
+    await ankiStore.loadCards()
     totalCards.value = filteredCards.value.length
     currentPage.value = 1
     ElMessage.success('筛选应用成功！')
@@ -320,11 +304,9 @@ const deleteCard = async (card) => {
       }
     )
     
-    const index = cards.value.findIndex(c => c.id === card.id)
-    if (index > -1) {
-      cards.value.splice(index, 1)
-      ElMessage.success('卡片删除成功！')
-    }
+    // 删除笔记（卡片是基于笔记的）
+    await ankiStore.deleteNotes([card.id])
+    ElMessage.success('卡片删除成功！')
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error(`删除失败: ${error.message}`)
@@ -347,7 +329,9 @@ onMounted(async () => {
   try {
     // 如果已连接，加载数据
     if (ankiStore.isConnected) {
+      await ankiStore.loadCards()
       await ankiStore.loadModels()
+      await ankiStore.loadDecks()
     }
     totalCards.value = cards.value.length
   } catch (error) {

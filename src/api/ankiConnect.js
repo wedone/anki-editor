@@ -136,6 +136,23 @@ class AnkiConnectAPI {
   }
 
   /**
+   * 获取笔记类型信息
+   * @param {string} modelName - 笔记类型名称
+   * @returns {Promise<object>} 笔记类型信息
+   */
+  async getModelInfo(modelName) {
+    return await this.sendRequest('modelInfo', { modelName })
+  }
+
+  /**
+   * 获取所有笔记类型信息
+   * @returns {Promise<object>} 笔记类型信息映射
+   */
+  async getModelsInfo() {
+    return await this.sendRequest('modelNamesAndIds')
+  }
+
+  /**
    * 获取所有标签
    * @returns {Promise<Array>} 标签列表
    */
@@ -235,6 +252,313 @@ class AnkiConnectAPI {
    */
   async getCollectionStatsHTML(wholeCollection = true) {
     return await this.sendRequest('getCollectionStatsHTML', { wholeCollection })
+  }
+
+  /**
+   * 获取牌组统计信息
+   * @param {string} deckName - 牌组名称
+   * @returns {Promise<object>} 牌组统计信息
+   */
+  async getDeckStats(deckName) {
+    try {
+      // 获取牌组中的卡片
+      const query = `deck:"${deckName}"`
+      const noteIds = await this.findNotes(query)
+      
+      if (noteIds.length === 0) {
+        return {
+          total: 0,
+          new: 0,
+          learning: 0,
+          review: 0,
+          suspended: 0
+        }
+      }
+
+      // 获取卡片信息
+      const notes = await this.notesInfo(noteIds)
+      const cardIds = notes.flatMap(note => note.cards)
+      const cards = await this.cardsInfo(cardIds)
+
+      // 统计卡片状态
+      const stats = {
+        total: cards.length,
+        new: 0,
+        learning: 0,
+        review: 0,
+        suspended: 0
+      }
+
+      cards.forEach(card => {
+        if (card.suspended) {
+          stats.suspended++
+        } else if (card.queue === 0) {
+          stats.new++
+        } else if (card.queue === 1 || card.queue === 3) {
+          stats.learning++
+        } else if (card.queue === 2) {
+          stats.review++
+        }
+      })
+
+      return stats
+    } catch (error) {
+      console.error(`获取牌组 ${deckName} 统计信息失败:`, error)
+      return null
+    }
+  }
+
+  /**
+   * 获取所有牌组的统计信息
+   * @returns {Promise<object>} 所有牌组统计信息
+   */
+  async getAllDeckStats() {
+    const deckNames = await this.getDeckNames()
+    const stats = {}
+    
+    for (const deckName of deckNames) {
+      try {
+        stats[deckName] = await this.getDeckStats(deckName)
+      } catch (error) {
+        console.error(`获取牌组 ${deckName} 统计信息失败:`, error)
+        stats[deckName] = null
+      }
+    }
+    
+    return stats
+  }
+
+  /**
+   * 获取卡片状态统计
+   * @returns {Promise<object>} 卡片状态统计
+   */
+  async getCardStatusStats() {
+    const deckStats = await this.getAllDeckStats()
+    const stats = {
+      new: 0,
+      learning: 0,
+      review: 0,
+      suspended: 0
+    }
+    
+    Object.values(deckStats).forEach(deckStat => {
+      if (deckStat) {
+        stats.new += deckStat.new || 0
+        stats.learning += deckStat.learning || 0
+        stats.review += deckStat.review || 0
+        stats.suspended += deckStat.suspended || 0
+      }
+    })
+    
+    return stats
+  }
+
+  /**
+   * 获取牌组卡片列表
+   * @param {string} deckName - 牌组名称
+   * @returns {Promise<Array>} 卡片列表
+   */
+  async getDeckCards(deckName) {
+    try {
+      const query = `deck:"${deckName}"`
+      const noteIds = await this.findNotes(query)
+      const notes = await this.notesInfo(noteIds)
+      
+      return notes.map(note => ({
+        id: note.noteId,
+        cardIds: note.cards,
+        deck: deckName,
+        model: note.modelName,
+        fields: note.fields,
+        tags: note.tags,
+        created: note.created,
+        modified: note.modified
+      }))
+    } catch (error) {
+      console.error(`获取牌组 ${deckName} 卡片失败:`, error)
+      return []
+    }
+  }
+
+  /**
+   * 获取所有卡片信息
+   * @returns {Promise<Array>} 所有卡片信息
+   */
+  async getAllCards() {
+    const deckNames = await this.getDeckNames()
+    const allCards = []
+    
+    for (const deckName of deckNames) {
+      try {
+        const deckCards = await this.getDeckCards(deckName)
+        allCards.push(...deckCards)
+      } catch (error) {
+        console.error(`获取牌组 ${deckName} 卡片失败:`, error)
+      }
+    }
+    
+    return allCards
+  }
+
+  /**
+   * 获取笔记类型字段信息
+   * @param {string} modelName - 笔记类型名称
+   * @returns {Promise<Array>} 字段信息列表
+   */
+  async getModelFields(modelName) {
+    try {
+      const modelInfo = await this.getModelInfo(modelName)
+      return modelInfo.flds.map(field => ({
+        name: field.name,
+        sticky: field.sticky,
+        rtl: field.rtl,
+        ord: field.ord,
+        font: field.font,
+        size: field.size,
+        media: field.media
+      }))
+    } catch (error) {
+      console.error(`获取笔记类型 ${modelName} 字段信息失败:`, error)
+      return []
+    }
+  }
+
+  /**
+   * 获取所有笔记类型字段信息
+   * @returns {Promise<object>} 所有笔记类型字段信息
+   */
+  async getAllModelFields() {
+    const modelNames = await this.getModelNames()
+    const fields = {}
+    
+    for (const modelName of modelNames) {
+      try {
+        fields[modelName] = await this.getModelFields(modelName)
+      } catch (error) {
+        console.error(`获取笔记类型 ${modelName} 字段信息失败:`, error)
+        fields[modelName] = []
+      }
+    }
+    
+    return fields
+  }
+
+  /**
+   * 获取学习记录
+   * @param {string} startDate - 开始日期 (YYYY-MM-DD)
+   * @param {string} endDate - 结束日期 (YYYY-MM-DD)
+   * @returns {Promise<Array>} 学习记录列表
+   */
+  async getReviewHistory(startDate, endDate) {
+    try {
+      // 获取所有卡片
+      const allCards = await this.getAllCards()
+      const cardIds = allCards.flatMap(card => card.cardIds)
+      
+      // 获取复习记录
+      const reviews = await this.sendRequest('getReviewsOfCards', {
+        cards: cardIds,
+        startDate: startDate,
+        endDate: endDate
+      })
+      
+      return reviews
+    } catch (error) {
+      console.error('获取学习记录失败:', error)
+      return []
+    }
+  }
+
+  /**
+   * 获取媒体文件列表
+   * @returns {Promise<Array>} 媒体文件列表
+   */
+  async getMediaFiles() {
+    return await this.sendRequest('getMediaFiles')
+  }
+
+  /**
+   * 添加媒体文件
+   * @param {string} filename - 文件名
+   * @param {string} data - 文件数据 (base64)
+   * @returns {Promise<null>}
+   */
+  async storeMediaFile(filename, data) {
+    return await this.sendRequest('storeMediaFile', {
+      filename: filename,
+      data: data
+    })
+  }
+
+  /**
+   * 获取媒体文件
+   * @param {string} filename - 文件名
+   * @returns {Promise<string>} 文件数据 (base64)
+   */
+  async retrieveMediaFile(filename) {
+    return await this.sendRequest('retrieveMediaFile', {
+      filename: filename
+    })
+  }
+
+  /**
+   * 删除媒体文件
+   * @param {string} filename - 文件名
+   * @returns {Promise<null>}
+   */
+  async deleteMediaFile(filename) {
+    return await this.sendRequest('deleteMediaFile', {
+      filename: filename
+    })
+  }
+
+  /**
+   * 获取配置信息
+   * @returns {Promise<object>} 配置信息
+   */
+  async getConfig() {
+    return await this.sendRequest('getConfig')
+  }
+
+  /**
+   * 设置配置信息
+   * @param {object} config - 配置信息
+   * @returns {Promise<null>}
+   */
+  async setConfig(config) {
+    return await this.sendRequest('setConfig', { config: config })
+  }
+
+  /**
+   * 获取用户信息
+   * @returns {Promise<object>} 用户信息
+   */
+  async getUserInfo() {
+    return await this.sendRequest('getUserInfo')
+  }
+
+  /**
+   * 同步集合
+   * @returns {Promise<null>}
+   */
+  async sync() {
+    return await this.sendRequest('sync')
+  }
+
+  /**
+   * 获取集合路径
+   * @returns {Promise<string>} 集合路径
+   */
+  async getCollectionPath() {
+    return await this.sendRequest('getCollectionPath')
+  }
+
+  /**
+   * 获取数据库路径
+   * @returns {Promise<string>} 数据库路径
+   */
+  async getDatabasePath() {
+    return await this.sendRequest('getDatabasePath')
   }
 }
 
