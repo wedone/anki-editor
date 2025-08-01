@@ -64,13 +64,19 @@
         <el-icon><Setting /></el-icon>
         <template #title>设置</template>
       </el-menu-item>
+      
+      <!-- API 测试 -->
+      <el-menu-item index="api-tester">
+        <el-icon><Connection /></el-icon>
+        <template #title>API 测试</template>
+      </el-menu-item>
     </el-menu>
   </div>
 </template>
 
 <script>
 import { ref, computed } from 'vue'
-import { Folder, Document, Edit, View, Setting, Fold, Expand } from '@element-plus/icons-vue'
+import { Folder, Document, Edit, View, Setting, Fold, Expand, Connection } from '@element-plus/icons-vue'
 
 export default {
   name: 'Sidebar',
@@ -81,7 +87,8 @@ export default {
     View,
     Setting,
     Fold,
-    Expand
+    Expand,
+    Connection
   },
   props: {
     currentDeck: {

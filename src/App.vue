@@ -63,6 +63,11 @@
           <Settings 
             v-else-if="activeMenu === 'settings'"
           />
+          
+          <!-- API 测试 -->
+          <ApiTester 
+            v-else-if="activeMenu === 'api-tester'"
+          />
         </el-main>
       </el-container>
     </el-container>
@@ -79,6 +84,7 @@ import CardList from './components/CardList.vue'
 import FieldEditor from './components/FieldEditor.vue'
 import Preview from './components/Preview.vue'
 import Settings from './components/Settings.vue'
+import ApiTester from './components/ApiTester.vue'
 
 export default {
   name: 'App',
@@ -89,7 +95,8 @@ export default {
     CardList,
     FieldEditor,
     Preview,
-    Settings
+    Settings,
+    ApiTester
   },
   setup() {
     const activeMenu = ref('deck-manager')
