@@ -1,5 +1,9 @@
 // ApiTester 模块主入口
 export { default as ApiTester } from './ApiTester.vue'
+export { default as SimpleApiTester } from './SimpleApiTester.vue'
+export { default as StepWizard } from './StepWizard.vue'
+export { default as ParameterHelper } from './ParameterHelper.vue'
+export { default as SmartInput } from './SmartInput.vue'
 export { default as ApiList } from './ApiList.js'
 export { default as PresetTests } from './PresetTests.js'
 export { default as BatchTestDialog } from './BatchTestDialog.vue'

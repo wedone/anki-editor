@@ -84,7 +84,7 @@ import CardList from './components/CardList.vue'
 import FieldEditor from './components/FieldEditor.vue'
 import Preview from './components/Preview.vue'
 import Settings from './components/Settings.vue'
-import ApiTester from './components/ApiTester/ApiTester.vue'
+import ApiTester from './components/ApiTester/SimpleApiTester.vue'
 
 export default {
   name: 'App',
