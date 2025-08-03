@@ -356,10 +356,50 @@ src/
 │   ├── Settings.vue    # 设置页面
 │   └── ApiTester.vue   # API 测试工具
 ├── services/           # 服务层
-│   └── ankiConnect.js  # AnkiConnect API 封装
+│   └── ankiConnect/    # AnkiConnect API 模块化封装
+│       ├── index.js    # 主入口
+│       ├── core.js     # 核心请求方法
+│       ├── connection.js # 连接相关
+│       ├── basic.js    # 基础操作
+│       ├── decks.js    # 牌组操作
+│       ├── cards.js    # 卡片操作
+│       ├── notes.js    # 笔记操作
+│       ├── tags.js     # 标签操作
+│       ├── models.js   # 模型操作
+│       ├── statistics.js # 统计操作
+│       ├── media.js    # 媒体操作
+│       ├── other.js    # 其他操作
+│       └── all.js      # 默认导出
 ├── App.vue            # 根组件
 └── main.js           # 应用入口
 ```
+
+### 模块化开发
+
+项目采用模块化设计，特别是 `src/services/ankiConnect/` 目录展示了如何将大型文件进行模块化拆分：
+
+#### 模块化优势
+- **高内聚低耦合**：每个模块职责单一，便于维护
+- **文件大小控制**：每个文件不超过 100 行
+- **团队协作**：减少代码冲突，便于并行开发
+- **可扩展性**：便于添加新功能和 API
+
+#### 模块化结构
+- `core.js` - 核心请求方法，统一处理 HTTP 请求
+- `connection.js` - 连接相关功能
+- `basic.js` - 基础操作（同步、获取版本等）
+- `decks.js` - 牌组相关操作
+- `cards.js` - 卡片相关操作
+- `notes.js` - 笔记相关操作
+- `tags.js` - 标签相关操作
+- `models.js` - 模型相关操作
+- `statistics.js` - 统计相关操作
+- `media.js` - 媒体相关操作
+- `other.js` - 其他杂项操作
+
+#### 模块化参考文档
+- [AnkiConnect 模块化拆分指南](docs/ANKI_CONNECT_MODULARIZATION.md) - 详细的拆分步骤和最佳实践
+- [模块化拆分快速参考模板](docs/MODULARIZATION_TEMPLATE.md) - 快速参考模板，便于其他项目使用
 
 ### 添加新功能
 
@@ -377,6 +417,34 @@ src/
 3. 配置参数（如有）
 4. 发送请求并查看结果
 5. 使用预设测试功能验证多个 API
+
+### 模块化开发最佳实践
+
+#### 1. 文件拆分原则
+- 单个文件超过 100 行时考虑拆分
+- 按功能领域进行模块划分
+- 保持高内聚、低耦合
+
+#### 2. 命名规范
+- 目录使用 `kebab-case`：`ankiConnect/`
+- 文件使用 `kebab-case`：`core.js`, `decks.js`
+- 函数使用 `lowerCamelCase`：`getDeckList()`
+- 常量使用 `UPPER_SNAKE_CASE`：`ANKI_CONNECT_URL`
+
+#### 3. 导出规范
+- 使用命名导出：`export { functionName }`
+- 使用默认导出：`export default functionName`
+- 在主入口统一重新导出
+
+#### 4. 错误处理
+- 在核心模块统一处理错误
+- 提供详细的错误信息
+- 记录调试日志
+
+#### 5. 性能优化
+- 支持按需加载
+- 添加性能监控
+- 优化打包体积
 
 ## 快捷键
 
