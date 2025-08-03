@@ -1,6 +1,6 @@
 // AnkiConnect API 服务主入口
 export { default as checkConnection } from './connection.js'
-export { default as sync, getVersion } from './basic.js'
+export { sync, getVersion } from './basic.js'
 
 // 牌组操作
 export {

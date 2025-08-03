@@ -128,6 +128,13 @@ src/services/ankiConnect/
 - `importPackage()` - 导入包
 - `reloadCollection()` - 重新加载集合
 
+#### 12. 默认导出模块 (`all.js`)
+**职责**：提供所有 AnkiConnect API 函数的默认导出
+**包含内容**：
+- 导入所有模块的函数
+- 提供完整的默认导出对象
+- 支持 `import ankiConnect from './index.js'` 的使用方式
+
 ## 拆分步骤
 
 ### 步骤 1：创建目录结构
@@ -178,6 +185,12 @@ import { checkConnection } from '../services/ankiConnect.js'
 import { checkConnection } from '../services/ankiConnect/index.js'
 ```
 
+### 步骤 7：验证导入导出
+确保所有模块的导入导出正确：
+- 命名导出：`export { functionName }`
+- 默认导出：`export default functionName`
+- 混合导出：`export { default as name, functionName }`
+
 ## 模块化优势
 
 ### 1. 可维护性
@@ -216,11 +229,18 @@ import { checkConnection } from '../services/ankiConnect/index.js'
 - 使用命名导出：`export { functionName }`
 - 使用默认导出：`export default functionName`
 - 在主入口统一重新导出
+- **重要**：确保导入导出类型匹配（命名导出 vs 默认导出）
 
 ### 4. 错误处理
 - 在核心模块统一处理错误
 - 提供详细的错误信息
 - 记录调试日志
+
+### 5. 导入导出验证
+- 检查所有模块的导出类型
+- 验证主入口文件的导入语句
+- 确保 `all.js` 文件正确导入所有函数
+- 测试命名导入和默认导入两种方式
 
 ### 5. 文档维护
 - 每个模块添加详细注释
@@ -228,6 +248,45 @@ import { checkConnection } from '../services/ankiConnect/index.js'
 - 提供使用示例
 
 ## 扩展指南
+
+### 常见问题解决方案
+
+#### 1. 导入导出类型不匹配
+**问题**：`The requested module does not provide an export named 'default'`
+**解决方案**：
+```javascript
+// 错误：试图从命名导出模块导入默认导出
+export { default as functionName } from './module.js'
+
+// 正确：从命名导出模块导入命名导出
+export { functionName } from './module.js'
+
+// 正确：从默认导出模块导入默认导出
+export { default as functionName } from './module.js'
+```
+
+#### 2. 缺少默认导出文件
+**问题**：`all.js` 文件为空或不存在
+**解决方案**：
+```javascript
+// src/services/ankiConnect/all.js
+import { function1, function2 } from './module1.js'
+import { function3, function4 } from './module2.js'
+
+export default {
+  function1,
+  function2,
+  function3,
+  function4
+}
+```
+
+#### 3. 循环依赖
+**问题**：模块间相互导入导致循环依赖
+**解决方案**：
+- 将共享功能提取到独立模块
+- 使用依赖注入模式
+- 重新设计模块结构
 
 ### 添加新的 API 方法
 
