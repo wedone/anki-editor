@@ -90,7 +90,7 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Setting, Connection, Refresh } from '@element-plus/icons-vue'
-import { checkConnection } from '../services/ankiConnect.js'
+import { checkConnection } from '../services/ankiConnect/index.js'
 
 export default {
   name: 'Settings',

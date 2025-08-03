@@ -1,0 +1,67 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+请你阅读项目rules，并记住遵守项目rules
+### Project Rules
+
+0. **模块化开发**
+   - 所有功能开发必须采用模块化设计
+   - 按业务或功能划分独立模块，确保高内聚、低耦合
+   - 模块间通过明确定义的接口进行通信
+   - 便于维护、测试和团队协作
+
+1. **界面设计规范**
+   - 界面设计必须遵循 Element Plus 设计规范
+   - 优先使用 Element Plus 组件和内置属性实现功能
+   - 尽量避免使用自定义 CSS 样式
+   - 参考官方文档：https://element-plus.org/zh-CN/component/overview.html
+
+2. **文档更新规则**
+   - **更新 DOCS 目录下的文档**：要更新 DOCS 目录下的任何文档，必须先说明更新原因，并获得相关责任人或团队的同意。禁止未经审查直接自动更新 DOCS 目录下的文档。这样可以确保所有文档变更都是必要且经过审核的，保证文档的质量和准确性。
+   - **更新 CHANGELOG.md**：每次对项目进行重要更新（包括但不限于新功能添加、重大修复、依赖升级等），都必须在 `CHANGELOG.md` 中记录变更内容。变更条目应包括版本号、发布日期、变更类型（如新增、修复、改进）、简要描述及相关的贡献者信息。
+
+3. **代码与界面复用原则**
+   - 识别项目中多处使用的功能逻辑或界面组件
+   - 将通用功能封装为可复用的函数、组件或模块
+   - 提高代码可维护性，减少重复代码
+   - 优先考虑将可复用代码组织到 `utils`、`components` 或 `composables` 等共享目录中
+   - 公共界面元素应封装为可复用的 Vue 组件
+   - 复用时需注意避免引入新的代码重复或逻辑冗余，确保抽象合理、职责清晰，避免过度封装导致理解成本上升
+
+4. **命名规范**
+   - **组件文件**：使用 **PascalCase**（大驼峰，如 `UserProfile.vue`）或 **kebab-case**（短横线，如 `user-profile.vue`），项目内保持统一
+   - **变量与函数**：使用 **lowerCamelCase**（小驼峰），如 `userInfo`, `getUserList()`
+   - **组合式函数（composables）**：以 `use` 开头 + 小驼峰，如 `usePagination()`, `useModal()`
+   - **类、接口、类型**：使用 **PascalCase**（大驼峰），如 `class ApiService`, `interface UserConfig`, `type OrderStatus`
+   - **目录命名**：推荐使用 **kebab-case**，如 `user-management/`, `data-report/`
+
+5. **AnkiConnect 集成**
+   - 使用 AnkiConnect APIiConnect 官方文档](https://git.sr.ht/~foosoft/anki-connect/blob/master/README.md) 来编写代码，确保不使用未记录的动作（actions）
+   - 对每个 API 调用都参考官方文档中的示例和说明，确认其存在并了解其参数和返回值
+   - 将所有与 AnkiConnect 相关的功能封装进独立模块，方便后续维护和扩展
+   - 对于每一个主要功能（如卡片管理、牌组管理等），创建独立的 Vue 组件，并尽可能复用 Element Plus 组件
+
+6. **文件大小限制**
+   - 如果单个文件的代码量超过 1000 行，则应考虑将其拆分为多个文件
+   - 根据功能或逻辑单元来决定如何分割代码
+   - 使用清晰的命名和结构化的目录来组织拆分后的文件
+   - 拆分后应保证各部分职责单一，避免“大杂烩”式模块
+
+7. **调试使用 PowerShell 命令**
+   - 在进行调试时，优先使用 PowerShell 命令来执行自动化任务或运行调试脚本
+   - 编写清晰的 PowerShell 脚本，用于启动开发服务器、运行测试、构建项目等常见操作
+   - 示例 PowerShell 调试命令：
+     ```powershell
+     # 启动开发服务器
+     npm run dev
+
+     # 运行单元测试
+     npm run test
+
+     # 构建生产环境版本
+     npm run build
+     ```
+
+   - 确保所有开发人员熟悉基本的 PowerShell 命令和脚本编写技巧，以便能够高效地进行调试和问题排查

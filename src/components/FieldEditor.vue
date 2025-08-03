@@ -209,7 +209,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Check, RefreshLeft, ArrowLeft, ArrowRight, View } from '@element-plus/icons-vue'
-import { updateCardFields } from '../services/ankiConnect.js'
+import { updateCardFields } from '../services/ankiConnect/index.js'
 
 export default {
   name: 'FieldEditor',

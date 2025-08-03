@@ -102,7 +102,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Document, Search, Refresh } from '@element-plus/icons-vue'
-import { getCardsInDeck } from '../services/ankiConnect.js'
+import { getCardsInDeck } from '../services/ankiConnect/index.js'
 
 export default {
   name: 'CardList',

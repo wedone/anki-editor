@@ -111,7 +111,7 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import { Folder, Refresh, InfoFilled, CircleCheck } from '@element-plus/icons-vue'
-import { checkConnection, getDeckList } from '../services/ankiConnect.js'
+import { checkConnection, getDeckList } from '../services/ankiConnect/index.js'
 
 export default {
   name: 'DeckManager',

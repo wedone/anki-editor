@@ -231,7 +231,7 @@ import {
   QuestionFilled, 
   Document
 } from '@element-plus/icons-vue'
-import { checkConnection } from '../services/ankiConnect.js'
+import { checkConnection } from '../services/ankiConnect/index.js'
 
 export default {
   name: 'ApiTester',
