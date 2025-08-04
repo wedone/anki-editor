@@ -34,4 +34,7 @@ export async function getLatestReviewID(deck) {
 // 插入复习记录
 export async function insertReviews(reviews) {
   return await invoke('insertReviews', 6, { reviews })
-} 
+}
+
+// 便捷方法：获取卡片复习记录（别名）
+export const cardReviews = getCardReviews 

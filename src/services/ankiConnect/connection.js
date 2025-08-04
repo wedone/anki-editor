@@ -2,7 +2,7 @@
 import { invoke } from './core.js'
 
 // 检测连接状态
-export default async function checkConnection() {
+export async function checkConnection() {
   try {
     const version = await invoke('version')
     console.log('AnkiConnect 版本:', version)

@@ -6,6 +6,11 @@ export async function addNote(note) {
   return await invoke('addNote', 6, { note })
 }
 
+// 添加多个笔记
+export async function addNotes(notes) {
+  return await invoke('addNotes', 6, { notes })
+}
+
 // 检查是否可以添加笔记
 export async function canAddNotes(notes) {
   return await invoke('canAddNotes', 6, { notes })
@@ -64,4 +69,10 @@ export async function deleteNotes(notes) {
 // 移除空笔记
 export async function removeEmptyNotes() {
   return await invoke('removeEmptyNotes', 6)
-} 
+}
+
+// 便捷方法：获取笔记信息（别名）
+export const notesInfo = getNotesInfo
+
+// 便捷方法：获取笔记修改时间（别名）
+export const notesModTime = getNotesModTime 

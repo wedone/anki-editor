@@ -1,6 +1,6 @@
 // AnkiConnect API 列表配置
 export const apiList = [
-  // 基础操作 (Basic Operations)
+  // 基础操作
   {
     action: 'version',
     label: '获取版本',
@@ -10,13 +10,13 @@ export const apiList = [
   },
   {
     action: 'sync',
-    label: '同步',
-    description: '同步 Anki 集合',
+    label: '同步集合',
+    description: '同步 Anki 集合到 AnkiWeb',
     category: '基础操作',
     parameters: []
   },
   
-  // 牌组操作 (Deck Operations)
+  // 牌组操作
   {
     action: 'deckNames',
     label: '获取牌组列表',
@@ -25,32 +25,22 @@ export const apiList = [
     parameters: []
   },
   {
-    action: 'getDeckNames',
-    label: '获取牌组名称',
-    description: '获取牌组名称（包含子牌组）',
+    action: 'deckNamesAndIds',
+    label: '获取牌组列表（含ID）',
+    description: '获取所有牌组名称和ID',
     category: '牌组操作',
-    parameters: [
-      {
-        name: 'includeSubdecks',
-        type: 'select',
-        description: '是否包含子牌组',
-        options: [
-          { label: '是', value: true },
-          { label: '否', value: false }
-        ]
-      }
-    ]
+    parameters: []
   },
   {
-    action: 'getDeckConfig',
-    label: '获取牌组配置',
-    description: '获取指定牌组的配置信息',
+    action: 'getDecks',
+    label: '获取牌组信息',
+    description: '获取指定牌组的详细信息',
     category: '牌组操作',
     parameters: [
       {
-        name: 'deck',
-        type: 'string',
-        description: '牌组名称'
+        name: 'decks',
+        type: 'array',
+        description: '牌组名称数组'
       }
     ]
   },
@@ -75,22 +65,89 @@ export const apiList = [
     parameters: [
       {
         name: 'decks',
-        type: 'textarea',
-        description: '牌组名称数组，JSON格式'
+        type: 'array',
+        description: '要删除的牌组名称数组'
       },
       {
         name: 'cardsToo',
-        type: 'select',
+        type: 'boolean',
         description: '是否同时删除牌组中的卡片',
-        options: [
-          { label: '是', value: true },
-          { label: '否', value: false }
-        ]
+        default: true
+      }
+    ]
+  },
+  {
+    action: 'getDeckConfig',
+    label: '获取牌组配置',
+    description: '获取指定牌组的配置信息',
+    category: '牌组操作',
+    parameters: [
+      {
+        name: 'deck',
+        type: 'string',
+        description: '牌组名称'
+      }
+    ]
+  },
+  {
+    action: 'saveDeckConfig',
+    label: '保存牌组配置',
+    description: '保存牌组配置信息',
+    category: '牌组操作',
+    parameters: [
+      {
+        name: 'config',
+        type: 'object',
+        description: '配置对象'
+      }
+    ]
+  },
+  {
+    action: 'setDeckConfigId',
+    label: '设置牌组配置ID',
+    description: '设置牌组的配置ID',
+    category: '牌组操作',
+    parameters: [
+      {
+        name: 'deck',
+        type: 'string',
+        description: '牌组名称'
+      },
+      {
+        name: 'configId',
+        type: 'number',
+        description: '配置ID'
+      }
+    ]
+  },
+  {
+    action: 'cloneDeckConfigId',
+    label: '克隆牌组配置',
+    description: '克隆牌组配置并设置新的配置ID',
+    category: '牌组操作',
+    parameters: [
+      {
+        name: 'name',
+        type: 'string',
+        description: '新配置名称'
+      }
+    ]
+  },
+  {
+    action: 'removeDeckConfigId',
+    label: '移除牌组配置',
+    description: '移除牌组的配置ID',
+    category: '牌组操作',
+    parameters: [
+      {
+        name: 'configId',
+        type: 'number',
+        description: '配置ID'
       }
     ]
   },
   
-  // 卡片操作 (Card Operations)
+  // 卡片操作
   {
     action: 'findCards',
     label: '查找卡片',
@@ -100,15 +157,8 @@ export const apiList = [
       {
         name: 'query',
         type: 'string',
-        description: '查询条件，例如：deck:"英语词汇"'
+        description: '查询条件，如 deck:Default, is:due 等'
       }
-    ],
-    suggestions: [
-      'deck:"牌组名称" - 查找指定牌组的卡片',
-      'is:due - 查找到期的卡片',
-      'is:new - 查找新卡片',
-      'is:review - 查找复习卡片',
-      'tag:标签名 - 查找指定标签的卡片'
     ]
   },
   {
@@ -119,8 +169,8 @@ export const apiList = [
     parameters: [
       {
         name: 'cards',
-        type: 'textarea',
-        description: '卡片ID数组，JSON格式'
+        type: 'array',
+        description: '卡片ID数组'
       }
     ]
   },
@@ -132,61 +182,227 @@ export const apiList = [
     parameters: [
       {
         name: 'cards',
-        type: 'textarea',
-        description: '卡片ID数组，JSON格式'
+        type: 'array',
+        description: '卡片ID数组'
       }
     ]
   },
   {
-    action: 'getCardsInDeck',
-    label: '获取牌组中的卡片',
-    description: '获取指定牌组中的所有卡片信息',
+    action: 'getEaseFactors',
+    label: '获取易度因子',
+    description: '获取卡片的易度因子',
     category: '卡片操作',
     parameters: [
       {
-        name: 'deckName',
-        type: 'string',
-        description: '牌组名称'
+        name: 'cards',
+        type: 'array',
+        description: '卡片ID数组'
       }
     ]
   },
   {
-    action: 'getCardFields',
-    label: '获取卡片字段',
-    description: '获取指定卡片的字段内容',
+    action: 'setEaseFactors',
+    label: '设置易度因子',
+    description: '设置卡片的易度因子',
     category: '卡片操作',
     parameters: [
       {
-        name: 'cardId',
-        type: 'number',
-        description: '卡片ID'
+        name: 'cards',
+        type: 'array',
+        description: '卡片ID数组'
+      },
+      {
+        name: 'easeFactors',
+        type: 'array',
+        description: '易度因子数组'
       }
     ]
   },
   {
-    action: 'updateCardFields',
-    label: '更新卡片字段',
-    description: '更新指定卡片的字段内容',
+    action: 'setSpecificValueOfCard',
+    label: '设置卡片特定值',
+    description: '设置卡片的特定值（如标志、到期时间等）',
     category: '卡片操作',
     parameters: [
       {
-        name: 'cardId',
+        name: 'card',
         type: 'number',
         description: '卡片ID'
       },
       {
-        name: 'fields',
-        type: 'textarea',
-        description: '字段内容，JSON格式'
+        name: 'keys',
+        type: 'array',
+        description: '要设置的键名数组'
+      },
+      {
+        name: 'newValues',
+        type: 'array',
+        description: '新的值数组'
+      },
+      {
+        name: 'warning_check',
+        type: 'boolean',
+        description: '是否需要警告检查',
+        default: false
       }
-    ],
-    suggestions: [
-      '示例: {"Front": "新正面", "Back": "新背面"}',
-      '注意：这会更新笔记的所有字段，请确保包含所有必要字段'
+    ]
+  },
+  {
+    action: 'suspend',
+    label: '暂停卡片',
+    description: '暂停指定的卡片',
+    category: '卡片操作',
+    parameters: [
+      {
+        name: 'cards',
+        type: 'array',
+        description: '卡片ID数组'
+      }
+    ]
+  },
+  {
+    action: 'unsuspend',
+    label: '恢复卡片',
+    description: '恢复暂停的卡片',
+    category: '卡片操作',
+    parameters: [
+      {
+        name: 'cards',
+        type: 'array',
+        description: '卡片ID数组'
+      }
+    ]
+  },
+  {
+    action: 'suspended',
+    label: '检查卡片暂停状态',
+    description: '检查单张卡片是否暂停',
+    category: '卡片操作',
+    parameters: [
+      {
+        name: 'card',
+        type: 'number',
+        description: '卡片ID'
+      }
+    ]
+  },
+  {
+    action: 'areSuspended',
+    label: '批量检查暂停状态',
+    description: '检查多张卡片是否暂停',
+    category: '卡片操作',
+    parameters: [
+      {
+        name: 'cards',
+        type: 'array',
+        description: '卡片ID数组'
+      }
+    ]
+  },
+  {
+    action: 'areDue',
+    label: '检查到期状态',
+    description: '检查卡片是否到期',
+    category: '卡片操作',
+    parameters: [
+      {
+        name: 'cards',
+        type: 'array',
+        description: '卡片ID数组'
+      }
+    ]
+  },
+  {
+    action: 'getIntervals',
+    label: '获取间隔信息',
+    description: '获取卡片的间隔信息',
+    category: '卡片操作',
+    parameters: [
+      {
+        name: 'cards',
+        type: 'array',
+        description: '卡片ID数组'
+      },
+      {
+        name: 'complete',
+        type: 'boolean',
+        description: '是否获取完整间隔历史',
+        default: false
+      }
+    ]
+  },
+  {
+    action: 'cardsModTime',
+    label: '获取修改时间',
+    description: '获取卡片的修改时间',
+    category: '卡片操作',
+    parameters: [
+      {
+        name: 'cards',
+        type: 'array',
+        description: '卡片ID数组'
+      }
+    ]
+  },
+  {
+    action: 'forgetCards',
+    label: '忘记卡片',
+    description: '忘记卡片（重置为新卡片）',
+    category: '卡片操作',
+    parameters: [
+      {
+        name: 'cards',
+        type: 'array',
+        description: '卡片ID数组'
+      }
+    ]
+  },
+  {
+    action: 'relearnCards',
+    label: '重新学习卡片',
+    description: '重新学习卡片',
+    category: '卡片操作',
+    parameters: [
+      {
+        name: 'cards',
+        type: 'array',
+        description: '卡片ID数组'
+      }
+    ]
+  },
+  {
+    action: 'answerCards',
+    label: '回答卡片',
+    description: '回答卡片（1=Again, 2=Good, 3=Easy, 4=Hard）',
+    category: '卡片操作',
+    parameters: [
+      {
+        name: 'answers',
+        type: 'array',
+        description: '回答数组，每个元素包含 cardId 和 ease'
+      }
+    ]
+  },
+  {
+    action: 'setDueDate',
+    label: '设置到期日期',
+    description: '设置卡片的到期日期',
+    category: '卡片操作',
+    parameters: [
+      {
+        name: 'cards',
+        type: 'array',
+        description: '卡片ID数组'
+      },
+      {
+        name: 'days',
+        type: 'string',
+        description: '到期天数，如 0（今天）、1（明天）、"3-7"（随机）'
+      }
     ]
   },
   
-  // 笔记操作 (Note Operations)
+  // 笔记操作
   {
     action: 'addNote',
     label: '添加笔记',
@@ -195,60 +411,60 @@ export const apiList = [
     parameters: [
       {
         name: 'note',
-        type: 'textarea',
-        description: '笔记对象，JSON格式'
+        type: 'object',
+        description: '笔记对象，包含 modelName, deckName, fields 等'
       }
-    ],
-    suggestions: [
-      '必须包含 modelName（笔记类型）',
-      '必须包含 deckName（牌组名称）',
-      '必须包含 fields（字段内容）',
-      '可选包含 tags（标签）',
-      '示例: {"modelName": "Basic", "deckName": "默认", "fields": {"Front": "正面", "Back": "背面"}}'
+    ]
+  },
+  {
+    action: 'addNotes',
+    label: '批量添加笔记',
+    description: '批量添加多个笔记',
+    category: '笔记操作',
+    parameters: [
+      {
+        name: 'notes',
+        type: 'array',
+        description: '笔记对象数组'
+      }
     ]
   },
   {
     action: 'canAddNotes',
-    label: '检查是否可以添加笔记',
+    label: '检查可添加笔记',
     description: '检查是否可以添加指定的笔记',
     category: '笔记操作',
     parameters: [
       {
         name: 'notes',
-        type: 'textarea',
-        description: '笔记对象数组，JSON格式'
+        type: 'array',
+        description: '笔记对象数组'
       }
     ]
   },
   {
     action: 'updateNoteFields',
     label: '更新笔记字段',
-    description: '更新指定笔记的字段内容',
+    description: '更新笔记的字段内容',
     category: '笔记操作',
     parameters: [
       {
         name: 'note',
-        type: 'textarea',
-        description: '笔记对象，JSON格式'
+        type: 'object',
+        description: '笔记对象'
       }
-    ],
-    suggestions: [
-      '必须包含 id（笔记ID）',
-      '必须包含 fields（字段内容）',
-      '示例: {"id": 123456, "fields": {"Front": "新正面", "Back": "新背面"}}',
-      '注意：这会更新笔记的所有字段，请确保包含所有必要字段'
     ]
   },
   {
     action: 'updateNote',
     label: '更新笔记',
-    description: '更新笔记（包括字段和标签）',
+    description: '更新整个笔记',
     category: '笔记操作',
     parameters: [
       {
         name: 'note',
-        type: 'textarea',
-        description: '笔记对象，JSON格式'
+        type: 'object',
+        description: '笔记对象'
       }
     ]
   },
@@ -268,13 +484,13 @@ export const apiList = [
   {
     action: 'notesInfo',
     label: '获取笔记信息',
-    description: '获取指定笔记的详细信息',
+    description: '获取笔记的详细信息',
     category: '笔记操作',
     parameters: [
       {
         name: 'notes',
-        type: 'textarea',
-        description: '笔记ID数组，JSON格式'
+        type: 'array',
+        description: '笔记ID数组'
       }
     ]
   },
@@ -286,8 +502,8 @@ export const apiList = [
     parameters: [
       {
         name: 'notes',
-        type: 'textarea',
-        description: '笔记ID数组，JSON格式'
+        type: 'array',
+        description: '笔记ID数组'
       }
     ]
   },
@@ -299,8 +515,8 @@ export const apiList = [
     parameters: [
       {
         name: 'notes',
-        type: 'textarea',
-        description: '笔记ID数组，JSON格式'
+        type: 'array',
+        description: '笔记ID数组'
       }
     ]
   },
@@ -312,7 +528,14 @@ export const apiList = [
     parameters: []
   },
   
-  // 标签操作 (Tag Operations)
+  // 标签操作
+  {
+    action: 'getTags',
+    label: '获取标签列表',
+    description: '获取所有标签',
+    category: '标签操作',
+    parameters: []
+  },
   {
     action: 'addTags',
     label: '添加标签',
@@ -321,13 +544,13 @@ export const apiList = [
     parameters: [
       {
         name: 'notes',
-        type: 'textarea',
-        description: '笔记ID数组，JSON格式'
+        type: 'array',
+        description: '笔记ID数组'
       },
       {
         name: 'tags',
-        type: 'string',
-        description: '标签名称'
+        type: 'array',
+        description: '标签数组'
       }
     ]
   },
@@ -339,29 +562,15 @@ export const apiList = [
     parameters: [
       {
         name: 'notes',
-        type: 'textarea',
-        description: '笔记ID数组，JSON格式'
+        type: 'array',
+        description: '笔记ID数组'
       },
       {
         name: 'tags',
-        type: 'string',
-        description: '标签名称'
+        type: 'array',
+        description: '标签数组'
       }
     ]
-  },
-  {
-    action: 'getTags',
-    label: '获取标签',
-    description: '获取所有标签',
-    category: '标签操作',
-    parameters: []
-  },
-  {
-    action: 'clearUnusedTags',
-    label: '清理未使用标签',
-    description: '清理未使用的标签',
-    category: '标签操作',
-    parameters: []
   },
   {
     action: 'replaceTags',
@@ -371,8 +580,8 @@ export const apiList = [
     parameters: [
       {
         name: 'notes',
-        type: 'textarea',
-        description: '笔记ID数组，JSON格式'
+        type: 'array',
+        description: '笔记ID数组'
       },
       {
         name: 'tag_to_replace',
@@ -388,8 +597,8 @@ export const apiList = [
   },
   {
     action: 'replaceTagsInAllNotes',
-    label: '替换所有笔记中的标签',
-    description: '替换所有笔记中的标签',
+    label: '全局替换标签',
+    description: '在所有笔记中替换标签',
     category: '标签操作',
     parameters: [
       {
@@ -404,71 +613,78 @@ export const apiList = [
       }
     ]
   },
+  {
+    action: 'clearUnusedTags',
+    label: '清理未使用标签',
+    description: '清理所有未使用的标签',
+    category: '标签操作',
+    parameters: []
+  },
   
-  // 模型操作 (Model Operations)
+  // 模型操作
   {
     action: 'getModelNames',
     label: '获取模型名称',
-    description: '获取所有笔记类型名称',
+    description: '获取所有模型名称',
     category: '模型操作',
     parameters: []
   },
   {
     action: 'getModelFieldNames',
-    label: '获取模型字段',
-    description: '获取指定笔记类型的字段名称',
+    label: '获取模型字段名称',
+    description: '获取指定模型的字段名称',
     category: '模型操作',
     parameters: [
       {
         name: 'modelName',
         type: 'string',
-        description: '笔记类型名称'
+        description: '模型名称'
       }
     ]
   },
   {
     action: 'getModelFieldTypes',
     label: '获取模型字段类型',
-    description: '获取指定笔记类型的字段类型',
+    description: '获取指定模型的字段类型',
     category: '模型操作',
     parameters: [
       {
         name: 'modelName',
         type: 'string',
-        description: '笔记类型名称'
+        description: '模型名称'
       }
     ]
   },
   {
     action: 'getModelStyling',
     label: '获取模型样式',
-    description: '获取指定笔记类型的样式',
+    description: '获取指定模型的样式',
     category: '模型操作',
     parameters: [
       {
         name: 'modelName',
         type: 'string',
-        description: '笔记类型名称'
+        description: '模型名称'
       }
     ]
   },
   {
     action: 'getModelTemplates',
     label: '获取模型模板',
-    description: '获取指定笔记类型的模板',
+    description: '获取指定模型的模板',
     category: '模型操作',
     parameters: [
       {
         name: 'modelName',
         type: 'string',
-        description: '笔记类型名称'
+        description: '模型名称'
       }
     ]
   },
   {
     action: 'createModel',
     label: '创建模型',
-    description: '创建新的笔记类型',
+    description: '创建新的模型',
     category: '模型操作',
     parameters: [
       {
@@ -478,77 +694,77 @@ export const apiList = [
       },
       {
         name: 'inOrderFields',
-        type: 'textarea',
-        description: '字段名称数组，JSON格式'
+        type: 'array',
+        description: '字段名称数组'
       },
       {
         name: 'css',
         type: 'string',
-        description: 'CSS样式'
+        description: 'CSS 样式'
       },
       {
         name: 'cardTemplates',
-        type: 'textarea',
-        description: '卡片模板数组，JSON格式'
+        type: 'array',
+        description: '卡片模板数组'
       }
     ]
   },
   {
     action: 'updateModelTemplates',
     label: '更新模型模板',
-    description: '更新笔记类型的模板',
+    description: '更新模型的模板',
     category: '模型操作',
     parameters: [
       {
         name: 'model',
-        type: 'textarea',
-        description: '模型对象，JSON格式'
+        type: 'object',
+        description: '模型对象'
       }
     ]
   },
   {
     action: 'updateModelStyling',
     label: '更新模型样式',
-    description: '更新笔记类型的样式',
+    description: '更新模型的样式',
     category: '模型操作',
     parameters: [
       {
         name: 'model',
-        type: 'textarea',
-        description: '模型对象，JSON格式'
+        type: 'object',
+        description: '模型对象'
       }
     ]
   },
   {
     action: 'updateModelFields',
     label: '更新模型字段',
-    description: '更新笔记类型的字段',
+    description: '更新模型的字段',
     category: '模型操作',
     parameters: [
       {
         name: 'model',
-        type: 'textarea',
-        description: '模型对象，JSON格式'
+        type: 'object',
+        description: '模型对象'
       }
     ]
   },
   {
     action: 'updateModel',
     label: '更新模型',
-    description: '更新笔记类型',
+    description: '更新整个模型',
     category: '模型操作',
     parameters: [
       {
         name: 'model',
-        type: 'textarea',
-        description: '模型对象，JSON格式'
+        type: 'object',
+        description: '模型对象'
       }
     ]
   },
   {
     action: 'deleteModel',
     label: '删除模型',
-    description: '删除笔记类型',
+    description: '删除指定的模型',
     category: '模型操作',
     parameters: [
       {
@@ -558,8 +774,143 @@ export const apiList = [
       }
     ]
   },
+  {
+    action: 'getModel',
+    label: '获取模型信息',
+    description: '获取指定模型的完整信息',
+    category: '模型操作',
+    parameters: [
+      {
+        name: 'modelName',
+        type: 'string',
+        description: '模型名称'
+      }
+    ]
+  },
+  {
+    action: 'getModelID',
+    label: '获取模型ID',
+    description: '获取指定模型的ID',
+    category: '模型操作',
+    parameters: [
+      {
+        name: 'modelName',
+        type: 'string',
+        description: '模型名称'
+      }
+    ]
+  },
+  {
+    action: 'getModelName',
+    label: '获取模型名称（通过ID）',
+    description: '根据模型ID获取模型名称',
+    category: '模型操作',
+    parameters: [
+      {
+        name: 'modelID',
+        type: 'number',
+        description: '模型ID'
+      }
+    ]
+  },
+  {
+    action: 'getModelFieldNamesByID',
+    label: '获取模型字段名称（通过ID）',
+    description: '根据模型ID获取字段名称',
+    category: '模型操作',
+    parameters: [
+      {
+        name: 'modelID',
+        type: 'number',
+        description: '模型ID'
+      }
+    ]
+  },
+  {
+    action: 'getModelFieldTypesByID',
+    label: '获取模型字段类型（通过ID）',
+    description: '根据模型ID获取字段类型',
+    category: '模型操作',
+    parameters: [
+      {
+        name: 'modelID',
+        type: 'number',
+        description: '模型ID'
+      }
+    ]
+  },
+  {
+    action: 'getModelStylingByID',
+    label: '获取模型样式（通过ID）',
+    description: '根据模型ID获取样式',
+    category: '模型操作',
+    parameters: [
+      {
+        name: 'modelID',
+        type: 'number',
+        description: '模型ID'
+      }
+    ]
+  },
+  {
+    action: 'getModelTemplatesByID',
+    label: '获取模型模板（通过ID）',
+    description: '根据模型ID获取模板',
+    category: '模型操作',
+    parameters: [
+      {
+        name: 'modelID',
+        type: 'number',
+        description: '模型ID'
+      }
+    ]
+  },
+  {
+    action: 'getModelByID',
+    label: '获取模型信息（通过ID）',
+    description: '根据模型ID获取完整信息',
+    category: '模型操作',
+    parameters: [
+      {
+        name: 'modelID',
+        type: 'number',
+        description: '模型ID'
+      }
+    ]
+  },
+  {
+    action: 'updateModelByID',
+    label: '更新模型（通过ID）',
+    description: '根据模型ID更新模型',
+    category: '模型操作',
+    parameters: [
+      {
+        name: 'modelID',
+        type: 'number',
+        description: '模型ID'
+      },
+      {
+        name: 'model',
+        type: 'object',
+        description: '模型对象'
+      }
+    ]
+  },
+  {
+    action: 'deleteModelByID',
+    label: '删除模型（通过ID）',
+    description: '根据模型ID删除模型',
+    category: '模型操作',
+    parameters: [
+      {
+        name: 'modelID',
+        type: 'number',
+        description: '模型ID'
+      }
+    ]
+  },
   
-  // 统计操作 (Statistics Operations)
+  // 统计操作
   {
     action: 'getNumCardsReviewedToday',
     label: '获取今日复习卡片数',
@@ -582,12 +933,9 @@ export const apiList = [
     parameters: [
       {
         name: 'wholeCollection',
-        type: 'select',
+        type: 'boolean',
         description: '是否包含整个集合',
-        options: [
-          { label: '是', value: true },
-          { label: '否', value: false }
-        ]
+        default: false
       }
     ]
   },
@@ -617,8 +965,8 @@ export const apiList = [
     parameters: [
       {
         name: 'cards',
-        type: 'textarea',
-        description: '卡片ID数组，JSON格式'
+        type: 'array',
+        description: '卡片ID数组'
       }
     ]
   },
@@ -643,17 +991,17 @@ export const apiList = [
     parameters: [
       {
         name: 'reviews',
-        type: 'textarea',
-        description: '复习记录数组，JSON格式'
+        type: 'array',
+        description: '复习记录数组'
       }
     ]
   },
   
-  // 媒体操作 (Media Operations)
+  // 媒体操作
   {
     action: 'storeMediaFile',
     label: '存储媒体文件',
-    description: '存储媒体文件',
+    description: '存储媒体文件到 Anki',
     category: '媒体操作',
     parameters: [
       {
@@ -671,7 +1019,7 @@ export const apiList = [
   {
     action: 'retrieveMediaFile',
     label: '获取媒体文件',
-    description: '获取媒体文件',
+    description: '从 Anki 获取媒体文件',
     category: '媒体操作',
     parameters: [
       {
@@ -684,7 +1032,7 @@ export const apiList = [
   {
     action: 'deleteMediaFile',
     label: '删除媒体文件',
-    description: '删除媒体文件',
+    description: '删除 Anki 中的媒体文件',
     category: '媒体操作',
     parameters: [
       {
@@ -695,18 +1043,18 @@ export const apiList = [
     ]
   },
   
-  // 其他操作 (Other Operations)
+  // 其他操作
   {
     action: 'getCollectionStats',
     label: '获取集合统计',
-    description: '获取整个集合的统计信息',
+    description: '获取集合的统计信息',
     category: '其他操作',
     parameters: []
   },
   {
     action: 'exportPackage',
     label: '导出包',
-    description: '导出指定牌组为 Anki 包文件',
+    description: '导出 Anki 包',
     category: '其他操作',
     parameters: [
       {
@@ -717,23 +1065,20 @@ export const apiList = [
       {
         name: 'path',
         type: 'string',
-        description: '导出文件路径'
+        description: '导出路径'
       },
       {
         name: 'includeSched',
-        type: 'select',
-        description: '是否包含学习进度',
-        options: [
-          { label: '是', value: true },
-          { label: '否', value: false }
-        ]
+        type: 'boolean',
+        description: '是否包含调度信息',
+        default: false
       }
     ]
   },
   {
     action: 'importPackage',
     label: '导入包',
-    description: '导入 Anki 包文件',
+    description: '导入 Anki 包',
     category: '其他操作',
     parameters: [
       {

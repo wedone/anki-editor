@@ -1,53 +1,56 @@
-// AnkiConnect API 服务默认导出
-import checkConnection from './connection.js'
+// 导入所有 AnkiConnect 功能
+import { checkConnection } from './connection.js'
 import { sync, getVersion } from './basic.js'
 
 // 牌组操作
 import {
   getDeckList,
   getDeckNames,
-  getDeckConfig,
-  setDeckConfigId,
-  cloneDeckConfigId,
-  removeDeckConfigId,
-  setDeckConfig,
-  getDeckConfigById,
+  getDeckNamesAndIds,
+  getDecks,
   createDeck,
   deleteDecks,
-  getDeckStudyInfo
+  getDeckConfig,
+  saveDeckConfig,
+  setDeckConfigId,
+  cloneDeckConfigId,
+  removeDeckConfigId
 } from './decks.js'
 
 // 卡片操作
 import {
+  getCards,
+  getCard,
+  updateCard,
+  updateCards,
   getCardsInDeck,
+  getCardFields,
+  updateCardFields,
   findCards,
-  getCardInfo,
-  cardsToNotes,
-  getCardFields
+  cardsToNotes
 } from './cards.js'
 
 // 笔记操作
 import {
   addNote,
+  addNotes,
   canAddNotes,
-  updateCardFields,
   updateNoteFields,
-  updateNote,
   findNotes,
-  getNotesInfo,
-  getNotesModTime,
+  notesInfo,
+  notesModTime,
   deleteNotes,
   removeEmptyNotes
 } from './notes.js'
 
 // 标签操作
 import {
+  getTags,
   addTags,
   removeTags,
-  getTags,
-  clearUnusedTags,
   replaceTags,
-  replaceTagsInAllNotes
+  replaceTagsInAllNotes,
+  clearUnusedTags
 } from './tags.js'
 
 // 模型操作
@@ -62,7 +65,17 @@ import {
   updateModelStyling,
   updateModelFields,
   updateModel,
-  deleteModel
+  deleteModel,
+  getModel,
+  getModelID,
+  getModelName,
+  getModelFieldNamesByID,
+  getModelFieldTypesByID,
+  getModelStylingByID,
+  getModelTemplatesByID,
+  getModelByID,
+  updateModelByID,
+  deleteModelByID
 } from './models.js'
 
 // 统计操作
@@ -70,7 +83,7 @@ import {
   getNumCardsReviewedToday,
   getNumCardsReviewedByDay,
   getCollectionStatsHTML,
-  getCardReviews,
+  cardReviews,
   getReviewsOfCards,
   getLatestReviewID,
   insertReviews
@@ -91,54 +104,55 @@ import {
   reloadCollection
 } from './other.js'
 
-// 默认导出所有方法
+// 导出所有功能
 export default {
   // 连接相关
   checkConnection,
-  
-  // 基础操作
   sync,
   getVersion,
   
   // 牌组操作
   getDeckList,
   getDeckNames,
+  getDeckNamesAndIds,
+  getDecks,
+  createDeck,
+  deleteDecks,
   getDeckConfig,
+  saveDeckConfig,
   setDeckConfigId,
   cloneDeckConfigId,
   removeDeckConfigId,
-  setDeckConfig,
-  getDeckConfigById,
-  createDeck,
-  deleteDecks,
-  getDeckStudyInfo,
   
   // 卡片操作
+  getCards,
+  getCard,
+  updateCard,
+  updateCards,
   getCardsInDeck,
-  findCards,
-  getCardInfo,
-  cardsToNotes,
   getCardFields,
+  updateCardFields,
+  findCards,
+  cardsToNotes,
   
   // 笔记操作
   addNote,
+  addNotes,
   canAddNotes,
-  updateCardFields,
   updateNoteFields,
-  updateNote,
   findNotes,
-  getNotesInfo,
-  getNotesModTime,
+  notesInfo,
+  notesModTime,
   deleteNotes,
   removeEmptyNotes,
   
   // 标签操作
+  getTags,
   addTags,
   removeTags,
-  getTags,
-  clearUnusedTags,
   replaceTags,
   replaceTagsInAllNotes,
+  clearUnusedTags,
   
   // 模型操作
   getModelNames,
@@ -152,12 +166,22 @@ export default {
   updateModelFields,
   updateModel,
   deleteModel,
+  getModel,
+  getModelID,
+  getModelName,
+  getModelFieldNamesByID,
+  getModelFieldTypesByID,
+  getModelStylingByID,
+  getModelTemplatesByID,
+  getModelByID,
+  updateModelByID,
+  deleteModelByID,
   
   // 统计操作
   getNumCardsReviewedToday,
   getNumCardsReviewedByDay,
   getCollectionStatsHTML,
-  getCardReviews,
+  cardReviews,
   getReviewsOfCards,
   getLatestReviewID,
   insertReviews,

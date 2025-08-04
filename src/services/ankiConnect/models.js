@@ -59,4 +59,54 @@ export async function updateModel(model) {
 // 删除模型
 export async function deleteModel(modelName) {
   return await invoke('deleteModel', 6, { modelName })
+}
+
+// 获取模型信息
+export async function getModel(modelName) {
+  return await invoke('getModel', 6, { modelName })
+}
+
+// 获取模型 ID
+export async function getModelID(modelName) {
+  return await invoke('getModelID', 6, { modelName })
+}
+
+// 获取模型名称（通过 ID）
+export async function getModelName(modelID) {
+  return await invoke('getModelName', 6, { modelID })
+}
+
+// 获取模型字段名称（通过 ID）
+export async function getModelFieldNamesByID(modelID) {
+  return await invoke('getModelFieldNamesByID', 6, { modelID })
+}
+
+// 获取模型字段类型（通过 ID）
+export async function getModelFieldTypesByID(modelID) {
+  return await invoke('getModelFieldTypesByID', 6, { modelID })
+}
+
+// 获取模型样式（通过 ID）
+export async function getModelStylingByID(modelID) {
+  return await invoke('getModelStylingByID', 6, { modelID })
+}
+
+// 获取模型模板（通过 ID）
+export async function getModelTemplatesByID(modelID) {
+  return await invoke('getModelTemplatesByID', 6, { modelID })
+}
+
+// 获取模型信息（通过 ID）
+export async function getModelByID(modelID) {
+  return await invoke('getModelByID', 6, { modelID })
+}
+
+// 更新模型（通过 ID）
+export async function updateModelByID(modelID, model) {
+  return await invoke('updateModelByID', 6, { modelID, model })
+}
+
+// 删除模型（通过 ID）
+export async function deleteModelByID(modelID) {
+  return await invoke('deleteModelByID', 6, { modelID })
 } 

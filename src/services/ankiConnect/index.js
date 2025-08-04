@@ -1,53 +1,56 @@
-// AnkiConnect API 服务主入口
-export { default as checkConnection } from './connection.js'
+// AnkiConnect 服务入口文件
+export { checkConnection } from './connection.js'
 export { sync, getVersion } from './basic.js'
 
 // 牌组操作
 export {
   getDeckList,
   getDeckNames,
-  getDeckConfig,
-  setDeckConfigId,
-  cloneDeckConfigId,
-  removeDeckConfigId,
-  setDeckConfig,
-  getDeckConfigById,
+  getDeckNamesAndIds,
+  getDecks,
   createDeck,
   deleteDecks,
-  getDeckStudyInfo
+  getDeckConfig,
+  saveDeckConfig,
+  setDeckConfigId,
+  cloneDeckConfigId,
+  removeDeckConfigId
 } from './decks.js'
 
 // 卡片操作
 export {
+  getCards,
+  getCard,
+  updateCard,
+  updateCards,
   getCardsInDeck,
+  getCardFields,
+  updateCardFields,
   findCards,
-  getCardInfo,
-  cardsToNotes,
-  getCardFields
+  cardsToNotes
 } from './cards.js'
 
 // 笔记操作
 export {
   addNote,
+  addNotes,
   canAddNotes,
-  updateCardFields,
   updateNoteFields,
-  updateNote,
   findNotes,
-  getNotesInfo,
-  getNotesModTime,
+  notesInfo,
+  notesModTime,
   deleteNotes,
   removeEmptyNotes
 } from './notes.js'
 
 // 标签操作
 export {
+  getTags,
   addTags,
   removeTags,
-  getTags,
-  clearUnusedTags,
   replaceTags,
-  replaceTagsInAllNotes
+  replaceTagsInAllNotes,
+  clearUnusedTags
 } from './tags.js'
 
 // 模型操作
@@ -62,7 +65,17 @@ export {
   updateModelStyling,
   updateModelFields,
   updateModel,
-  deleteModel
+  deleteModel,
+  getModel,
+  getModelID,
+  getModelName,
+  getModelFieldNamesByID,
+  getModelFieldTypesByID,
+  getModelStylingByID,
+  getModelTemplatesByID,
+  getModelByID,
+  updateModelByID,
+  deleteModelByID
 } from './models.js'
 
 // 统计操作
@@ -70,7 +83,7 @@ export {
   getNumCardsReviewedToday,
   getNumCardsReviewedByDay,
   getCollectionStatsHTML,
-  getCardReviews,
+  cardReviews,
   getReviewsOfCards,
   getLatestReviewID,
   insertReviews
@@ -91,5 +104,5 @@ export {
   reloadCollection
 } from './other.js'
 
-// 默认导出所有方法
+// 默认导出所有功能
 export { default } from './all.js' 

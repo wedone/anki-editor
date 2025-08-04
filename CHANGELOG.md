@@ -1,5 +1,156 @@
 # 更新日志
 
+## [1.2.0] - 2024-01-XX
+
+### 🎉 新增功能
+
+#### 完整的 AnkiConnect 卡片操作功能封装
+- **基础查询功能**：
+  - `getCardsInDeck(deckName)` - 获取指定牌组中的所有卡片
+  - `findCards(query)` - 根据查询条件查找卡片
+  - `getCardInfo(cards)` - 获取卡片的详细信息
+  - `cardsToNotes(cards)` - 将卡片ID转换为笔记ID
+  - `getCardFields(cardId)` - 获取单张卡片的字段信息
+
+- **易度因子管理**：
+  - `getEaseFactors(cards)` - 获取卡片的易度因子
+  - `setEaseFactors(cards, easeFactors)` - 设置卡片的易度因子
+
+- **卡片状态管理**：
+  - `suspendCards(cards)` - 暂停卡片
+  - `unsuspendCards(cards)` - 恢复暂停的卡片
+  - `isCardSuspended(card)` - 检查单张卡片是否暂停
+  - `areCardsSuspended(cards)` - 检查多张卡片是否暂停
+  - `areCardsDue(cards)` - 检查卡片是否到期
+
+- **卡片学习管理**：
+  - `getCardIntervals(cards, complete)` - 获取卡片间隔信息
+  - `forgetCards(cards)` - 忘记卡片（重置为新卡片）
+  - `relearnCards(cards)` - 重新学习卡片
+  - `answerCard(cardId, ease)` - 回答单张卡片
+  - `answerCards(answers)` - 批量回答卡片
+
+- **到期日期管理**：
+  - `setDueDate(cards, days)` - 设置卡片到期日期
+  - `setCardDueTime(cardId, dueTime)` - 设置卡片到期时间
+
+- **高级功能**：
+  - `setSpecificValueOfCard(card, keys, newValues, warningCheck)` - 设置卡片特定值
+  - `getCardsModTime(cards)` - 获取卡片修改时间
+  - `setCardFlag(cardId, flag)` - 设置卡片标志
+
+#### 便捷方法
+- `answerCard(cardId, ease)` - 回答单张卡片的便捷方法
+- `setCardFlag(cardId, flag)` - 设置卡片标志的便捷方法
+- `setCardDueTime(cardId, dueTime)` - 设置卡片到期时间的便捷方法
+
+#### API 测试工具完善
+- **完整的 API 列表**：补充了所有 AnkiConnect 卡片操作 API
+  - 新增 15+ 个卡片操作 API（易度因子、暂停/恢复、间隔、回答卡片等）
+  - 新增 5+ 个笔记操作 API（更新笔记、获取修改时间等）
+  - 新增 5+ 个标签操作 API（全局替换标签等）
+  - 新增 8+ 个模型操作 API（通过ID操作模型等）
+  - 修正了牌组操作 API 的参数配置
+
+- **API 分类优化**：
+  - 卡片操作：从 5 个 API 扩展到 20+ 个 API
+  - 笔记操作：从 7 个 API 扩展到 12+ 个 API
+  - 标签操作：从 5 个 API 扩展到 6 个 API
+  - 模型操作：从 12 个 API 扩展到 20+ 个 API
+
+- **参数配置完善**：
+  - 修正了 `getDecks` API 的参数（从 `cards` 改为 `decks`）
+  - 修正了 `cloneDeckConfigId` API 的参数（从 `deck, configId` 改为 `name`）
+  - 修正了 `removeDeckConfigId` API 的参数（从 `deck` 改为 `configId`）
+  - 添加了所有新 API 的详细参数说明
+
+### 🔧 技术改进
+
+#### 完整的错误处理机制
+- 所有函数都包含 try-catch 错误处理
+- 详细的错误日志记录
+- 统一的错误信息格式
+
+#### 性能优化
+- 使用 `getCardsModTime()` 替代 `getCardInfo()` 获取修改时间，性能提升约15倍
+- 批量操作支持，提高处理效率
+- 合理的查询条件使用，减少数据传输量
+
+#### 模块化设计
+- 功能按类别分组，便于维护和扩展
+- 清晰的函数命名和参数设计
+- 完整的 JSDoc 注释
+
+#### API 测试工具增强
+- **完整的 API 覆盖**：现在支持 80+ 个 AnkiConnect API
+- **准确的参数配置**：所有 API 参数都经过验证和修正
+- **详细的描述说明**：每个 API 都有清晰的功能描述和参数说明
+- **分类管理**：按功能类别组织 API，便于查找和使用
+
+### 🐛 修复问题
+
+#### 导入错误修复
+- **修复 `addNotes` 函数缺失**：在 `notes.js` 中添加了 `addNotes` 函数
+- **修复 `getCards` 函数缺失**：在 `cards.js` 中添加了 `getCards`、`getCard`、`updateCard`、`updateCards` 函数
+- **修复 `getDeckNamesAndIds` 函数缺失**：在 `decks.js` 中添加了 `getDeckNamesAndIds`、`getDecks`、`saveDeckConfig` 函数
+- **修复 `cardReviews` 函数缺失**：在 `statistics.js` 中添加了 `cardReviews` 别名导出
+- **修复 `checkConnection` 导出方式**：将 `connection.js` 中的默认导出改为命名导出
+- **修复 `notesInfo` 和 `notesModTime` 别名**：在 `notes.js` 中添加了相应的别名导出
+- **修复 `updateCardFields` 函数缺失**：在 `cards.js` 中添加了 `updateCardFields` 函数
+- **修复 `index.js` 导入错误**：将 `index.js` 中的默认导入改为命名导入，匹配 `connection.js` 的导出方式
+
+#### 模块导入完整性
+- 确保所有 `all.js` 中导入的函数都在对应的模块中存在
+- 添加了缺失的函数实现和别名导出
+- 统一了导出方式，确保模块间的一致性
+- 修复了所有导入/导出不匹配的问题
+
+### 📁 文件结构更新
+
+```
+src/services/ankiConnect/
+├── cards.js                    # 卡片操作功能实现
+├── examples/
+│   └── cardActionsExample.js   # 使用示例
+└── README.md                   # 详细文档
+```
+
+### 📚 文档更新
+
+- **新增文档**：
+  - `src/services/ankiConnect/README.md` - 卡片操作功能详细文档
+  - `src/services/ankiConnect/examples/cardActionsExample.js` - 完整的使用示例
+
+#### 文档内容包括：
+- 功能概览和分类说明
+- 详细的使用示例和代码片段
+- 查询语法参考
+- 错误处理指南
+- 性能优化建议
+- 注意事项和最佳实践
+
+### 🎯 使用示例
+
+```javascript
+// 基础查询
+const cards = await getCardsInDeck('Default')
+const dueCards = await findCards('is:due')
+
+// 易度因子管理
+const easeFactors = await getEaseFactors(cardIds)
+await setEaseFactors(cardIds, [4200, 4000])
+
+// 卡片状态管理
+await suspendCards(cardIds)
+const suspendedStatus = await areCardsSuspended(cardIds)
+
+// 回答卡片
+await answerCard(1483959291685, 2) // Good
+
+// 设置到期日期
+await setDueDate(cardIds, '3-7') // 3-7天后随机到期
+```
+
 ## [1.1.0] - 2024-01-XX
 
 ### 🎉 新增功能

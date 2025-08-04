@@ -21,6 +21,16 @@ export async function getDeckNames(includeSubdecks = false) {
   return await invoke('getDeckNames', 6, { includeSubdecks })
 }
 
+// 获取牌组名称和ID
+export async function getDeckNamesAndIds(includeSubdecks = false) {
+  return await invoke('getDeckNamesAndIds', 6, { includeSubdecks })
+}
+
+// 获取牌组信息
+export async function getDecks(deckNames) {
+  return await invoke('getDecks', 6, { decks: deckNames })
+}
+
 // 获取牌组配置
 export async function getDeckConfig(deckName) {
   try {
@@ -30,6 +40,11 @@ export async function getDeckConfig(deckName) {
     console.error('获取牌组配置失败:', error)
     throw error
   }
+}
+
+// 保存牌组配置
+export async function saveDeckConfig(config) {
+  return await invoke('saveDeckConfig', 6, { config })
 }
 
 // 设置牌组配置ID
